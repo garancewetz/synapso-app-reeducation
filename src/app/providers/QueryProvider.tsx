@@ -49,7 +49,7 @@ export function QueryProvider({ children }: PropsWithChildren) {
       client={queryClient}
       persistOptions={{
         persister,
-        // Health data — kept 24h max, revalidated at mount anyway.
+        // Health data — kept 7 days max, revalidated at mount anyway.
         maxAge: PERSIST_MAX_AGE_MS,
         buster: QUERY_CACHE_BUSTER,
         dehydrateOptions: {
