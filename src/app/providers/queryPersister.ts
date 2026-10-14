@@ -7,7 +7,9 @@ export const QUERY_CACHE_KEY = 'synapso-rq-cache';
 export const QUERY_CACHE_BUSTER = 'v1';
 
 // How long a persisted snapshot stays restorable.
-export const PERSIST_MAX_AGE_MS = 1000 * 60 * 60 * 24; // 24h
+// 7 days: covers patients who do not open the app every day (past 24h they got
+// the full cold chain again). Wiped on logout (clearPersistedQueryCache).
+export const PERSIST_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 
 // gcTime for the persisted-root queries. Must be >= PERSIST_MAX_AGE_MS: a query
 // garbage-collected from memory is also dropped from the next persisted snapshot,

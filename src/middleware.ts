@@ -21,6 +21,10 @@ const RATE_LIMIT_CONFIG = {
   api: { maxAttempts: 100, windowMs: 60 * 1000 },
 };
 
+// ⚡ PERFORMANCE: fail open after 1s instead of Upstash's 5s default — a slow Redis
+// must not hold every API call (and so the app launch) hostage.
+const RATE_LIMIT_TIMEOUT_MS = 1000;
+
 // --- Upstash Redis (production) ---
 
 let upstashAuthLimiter: UpstashLimiter | null = null;
@@ -47,12 +51,14 @@ async function getUpstashLimiters(): Promise<boolean> {
       redis,
       limiter: Ratelimit.fixedWindow(RATE_LIMIT_CONFIG.auth.maxAttempts, '15 m'),
       prefix: 'ratelimit:auth',
+      timeout: RATE_LIMIT_TIMEOUT_MS,
     });
 
     upstashApiLimiter = new Ratelimit({
       redis,
       limiter: Ratelimit.fixedWindow(RATE_LIMIT_CONFIG.api.maxAttempts, '1 m'),
       prefix: 'ratelimit:api',
+      timeout: RATE_LIMIT_TIMEOUT_MS,
     });
 
     return true;
