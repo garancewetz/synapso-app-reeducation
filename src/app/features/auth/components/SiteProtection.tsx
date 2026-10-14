@@ -19,9 +19,10 @@ export const SiteProtection = memo(function SiteProtection({ children, onAuthSuc
     onAuthSuccess?.();
   }, [refreshUser, onAuthSuccess]);
 
-  // ⚡ FAST FIRST PAINT: avec initialData SSR (UserContext), userLoading est false
-  // dès le premier rendu. Le skeleton ne s'affiche que lors d'un refetch tardif,
-  // jamais au boot — donc pas de flash loader.
+  // ⚡ COLD START: userLoading reste vrai tant que l'utilisateur est inconnu
+  // (prerender statique de `/`, restauration du cache persisté, premier
+  // /api/auth/check) → le HTML statique et le boot affichent le skeleton,
+  // jamais l'écran de connexion d'un utilisateur pourtant connecté.
   if (userLoading) {
     return <AppShellSkeleton />;
   }

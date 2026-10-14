@@ -75,7 +75,7 @@ export function UserProvider({ children, initialData, authPromise }: UserProvide
   // → l'utilisateur voit immédiatement la structure du shell
   const resolvedInitialData = authPromise ? use(authPromise) : initialData;
 
-  const { data: userData, isLoading: userLoading, refetch: refetchUser } = useQuery({
+  const { data: userData, isPending: userPending, refetch: refetchUser } = useQuery({
     queryKey: queryKeys.user.current(),
     queryFn: fetchUser,
     staleTime: 5 * 60 * 1000,
@@ -91,8 +91,13 @@ export function UserProvider({ children, initialData, authPromise }: UserProvide
   const currentUser = userData?.authenticated && userData?.user ? userData.user : null;
   const impersonatedUser = userData?.impersonatedUser || null;
   const isAdmin = userData?.isAdmin || false;
-  // ⚡ FIX: Utiliser userLoading directement (TanStack Query gère déjà l'état de chargement)
-  const loading = userLoading;
+  // ⚡ COLD START: `isPending` (no data yet), not `isLoading` (pending AND fetching).
+  // During the static prerender of `/` and while PersistQueryClientProvider restores
+  // the cache, the query is pending but idle → isLoading is false, so SiteProtection
+  // rendered AuthScreen: the static HTML and every launch showed the login form.
+  // isPending keeps the skeleton until we actually know (cache or /api/auth/check);
+  // an error (retry: false) moves it to 'error' → login screen, no infinite skeleton.
+  const loading = userPending;
 
   // ⚡ PERFORMANCE: Mémoriser effectiveUser pour éviter les recalculs inutiles
   // L'utilisateur effectif est l'impersonné si présent, sinon le connecté
