@@ -324,9 +324,9 @@ export const BODYPART_ICONS: Record<string, string> = {
   'Mâchoire': '👄',
   'Cou & Nuque': '🦒',
   'Nuque / Cervicales': '🦒',
-  'Dos': '🔙',
+  'Dos': '🦴',
   'Corps': '🧍',
-  'Bassin': '🦴',
+  'Bassin': '🩲',
   'Ventre': '🎯',
 
   'Jambes': '🦵',

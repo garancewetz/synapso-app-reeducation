@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import type { Exercice } from '@/app/types';
 import { Badge, WeeklyCompletionIndicator } from '@/app/components/ui';
 import { EyeIcon, BookmarkIcon } from '@/app/components/ui/icons';
+import { formatWorkoutSummary } from '../utils/workout.utils';
 
 type Props = {
   exercice: Exercice;
@@ -25,12 +26,7 @@ export function ExerciceCardHeader({ exercice, effectiveUserResetFrequency, onOp
   const showDailyBadge = !isWeekly && exercice.completedToday;
 
   // What to do, readable without expanding the card: "3 séries · 10× · 30 secondes"
-  const { series, repeat, duration } = exercice.workout;
-  const workoutSummary = [
-    series && series !== '1' && `${series} séries`,
-    repeat && `${repeat}×`,
-    duration,
-  ].filter(Boolean).join(' · ');
+  const workoutSummary = formatWorkoutSummary(exercice.workout);
 
   return (
     <div className="relative mb-3 pr-24">

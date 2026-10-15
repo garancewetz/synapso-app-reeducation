@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { CATEGORY_LABELS, CATEGORY_ORDER } from '@/app/constants/exercice.constants';
+import type { ExerciceCategory } from '@/app/types/exercice';
 import { useUser } from '@/app/contexts/UserContext';
 import { useExercices } from '@/app/features/exercices/hooks/useExercices';
 import { usePreserveDateParam } from '@/app/features/time-machine/hooks/usePreserveDateParam';
@@ -14,7 +17,14 @@ export function SeanceClient() {
   const { effectiveUser } = useUser();
   // Same query as the home (includeArchived: true) → served instantly from the
   // persisted cache; buildSessionQueue drops archived exercises.
-  const { exercices, loading, updateExercice } = useExercices({ includeArchived: true });
+  const { exercices: allExercices, loading, updateExercice } = useExercices({ includeArchived: true });
+  // ?category=CORE (from a zone page): play every pending exercise of that zone.
+  const categoryParam = useSearchParams().get('category')?.toUpperCase() as ExerciceCategory | undefined;
+  const zone = categoryParam && CATEGORY_ORDER.includes(categoryParam) ? categoryParam : null;
+  const exercices = useMemo(
+    () => (zone ? allExercices.filter((exercice) => exercice.category === zone) : allExercices),
+    [allExercices, zone]
+  );
   const preserveDate = usePreserveDateParam();
   const homeHref = preserveDate('/');
   const { unlockAudio, signalEnd } = useSessionSignals();
@@ -39,9 +49,13 @@ export function SeanceClient() {
 
   useEffect(() => {
     if (!effectiveUser || loading || target !== null) return;
+    if (zone) {
+      setTarget(Math.max(1, exercices.filter((exercice) => !exercice.archived && !exercice.completed).length));
+      return;
+    }
     const { remainingToday } = getTodayPlan(exercices);
     setTarget(remainingToday > 0 ? remainingToday : EXTRA_BATCH_SIZE);
-  }, [effectiveUser, loading, exercices, target]);
+  }, [effectiveUser, loading, exercices, target, zone]);
 
   useEffect(() => {
     if (!effectiveUser || loading || target === null) return;
@@ -113,7 +127,7 @@ export function SeanceClient() {
         {current && (
           <div className="flex-1">
             <p className="text-sm font-medium text-slate-600">
-              Exercice {position + 1} sur {steps.length}
+              {zone && `${CATEGORY_LABELS[zone]} · `}Exercice {position + 1} sur {steps.length}
             </p>
             <div className="mt-1 h-2 rounded-full bg-slate-200 overflow-hidden" aria-hidden="true">
               <div

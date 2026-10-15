@@ -1,5 +1,6 @@
 // Components
 export { ExerciceCard } from './components/ExerciceCard';
+export { ExerciceRow } from './components/ExerciceRow';
 export { ExerciceForm } from './components/ExerciceForm';
 export { ExerciceCardHeader } from './components/ExerciceCardHeader';
 export { ExerciceCardExpandable } from './components/ExerciceCardExpandable';
