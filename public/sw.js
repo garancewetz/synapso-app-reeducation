@@ -1,7 +1,9 @@
 // Version du cache - À METTRE À JOUR MANUELLEMENT lors des déploiements importants
 // ⚡ PERFORMANCE: Version fixe pour éviter d'invalider le cache à chaque visite
 // Incrémenter ce numéro uniquement quand les assets statiques changent
-const CACHE_VERSION = 'v1.5.0';
+const CACHE_VERSION = 'v1.6.0';
+// Au-delà, la page en cache est servie (le réseau la met à jour en arrière-plan).
+const HTML_NETWORK_TIMEOUT_MS = 3000;
 const CACHE_NAME = 'synapso-' + CACHE_VERSION;
 const OFFLINE_PAGE = '/offline.html';
 const urlsToCache = [
@@ -74,28 +76,37 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Pour les pages HTML : Stale-While-Revalidate
-  // ⚡ COLD START : retour immédiat depuis le cache (zéro attente Lambda Netlify),
-  // revalidation réseau en arrière-plan pour la prochaine visite.
-  // Cas non caché : fallback réseau direct, puis page offline si le réseau échoue.
+  // Pour les pages HTML : Network First avec délai max, puis cache.
+  // ⚠️ Pas de Stale-While-Revalidate : chaque URL gardait SA copie, parfois de
+  // plusieurs déploiements en arrière → ancienne interface affichée, et l'ancien
+  // client qui naviguait vers le nouveau serveur (build différent) déclenchait
+  // des rechargements en boucle. En ligne on sert donc toujours la version à
+  // jour (`/` est statique sur le CDN : ~0,1–0,4 s) ; le cache ne sert qu'hors
+  // ligne ou si le réseau dépasse HTML_NETWORK_TIMEOUT_MS (et il est mis à jour
+  // dès que la réponse réseau arrive).
   if (request.method === 'GET' && request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      caches.match(request).then((cachedResponse) => {
-        const networkFetch = fetch(request)
-          .then((response) => {
-            if (response && response.status === 200 && response.type === 'basic') {
-              const responseToCache = response.clone();
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(request, responseToCache);
-              });
-            }
-            return response;
-          })
-          .catch(() => caches.match(OFFLINE_PAGE));
+    event.respondWith((async () => {
+      const networkFetch = fetch(request).then((response) => {
+        if (response && response.status === 200 && response.type === 'basic') {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseToCache));
+        }
+        return response;
+      });
+      // If the cached copy wins the race, a later network failure must not go unhandled.
+      networkFetch.catch(() => undefined);
 
-        return cachedResponse || networkFetch;
-      })
-    );
+      const timeout = new Promise((resolve) => setTimeout(() => resolve(null), HTML_NETWORK_TIMEOUT_MS));
+      try {
+        const fastResponse = await Promise.race([networkFetch, timeout]);
+        if (fastResponse) return fastResponse;
+        // Réseau lent : copie en cache si elle existe, sinon on attend le réseau.
+        return (await caches.match(request)) || (await networkFetch);
+      } catch {
+        // Hors ligne
+        return (await caches.match(request)) || (await caches.match(OFFLINE_PAGE));
+      }
+    })());
     return;
   }
   
