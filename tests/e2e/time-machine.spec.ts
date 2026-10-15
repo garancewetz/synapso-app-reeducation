@@ -101,69 +101,47 @@ test.describe('Mode Sablier (Time Machine)', () => {
     expect(bannerText).toContain('Tu es sur le');
   });
 
-  test('devrait mettre à jour les gauges des category cards selon la date sélectionnée', async ({ page }) => {
-    // Aller à la page d'accueil
+  test('devrait mettre à jour les compteurs des zones selon la date sélectionnée', async ({ page }) => {
+    // Home zone list: « Haut du corps : 1 sur 16 faits » for each zone.
+    const zoneCounters = page.getByRole('navigation', { name: 'Zones du corps' }).getByRole('link', { name: / : \d+ sur \d+ faits$/ });
+
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    
-    // Capturer les valeurs initiales des gauges (pour aujourd'hui)
-    const initialGauges = await page.locator('[role="progressbar"]').all();
-    const initialValues: number[] = [];
-    for (const gauge of initialGauges) {
-      const value = await gauge.getAttribute('aria-valuenow');
-      initialValues.push(value ? parseInt(value) : 0);
-    }
-    
+    await expect(zoneCounters.first()).toBeVisible({ timeout: 10000 });
+
     // Aller à la page historique et activer le mode sablier pour hier
     await timeMachineHelper.goToHistory();
     await page.waitForSelector('[role="grid"], .grid', { timeout: 10000 });
     await timeMachineHelper.activateTimeMachineMode(1);
-    
-    // Attendre que le mode sablier soit actif
     await page.waitForSelector('[data-testid="time-machine-banner"]', { timeout: 5000 });
-    
-    // Retourner à la page d'accueil
+
     await page.goto('/?date=' + format(subDays(new Date(), 1), 'yyyy-MM-dd'));
     await page.waitForLoadState('networkidle');
-    
-    // Attendre que les gauges se mettent à jour
-    await page.waitForTimeout(2000);
-    
-    // Vérifier que les gauges ont potentiellement changé (selon les données d'hier)
-    const updatedGauges = await page.locator('[role="progressbar"]').all();
-    const updatedValues: number[] = [];
-    for (const gauge of updatedGauges) {
-      const value = await gauge.getAttribute('aria-valuenow');
-      updatedValues.push(value ? parseInt(value) : 0);
+
+    // Les compteurs restent présents et cohérents (« X sur Y », X ≤ Y) pour hier
+    await expect(zoneCounters.first()).toBeVisible({ timeout: 10000 });
+    for (const label of await zoneCounters.evaluateAll((links) => links.map((l) => l.getAttribute('aria-label') ?? ''))) {
+      const [, done, total] = label.match(/(\d+) sur (\d+)/) ?? [];
+      expect(Number(done)).toBeLessThanOrEqual(Number(total));
     }
-    
-    // Les valeurs peuvent être différentes selon les données d'hier
-    // On vérifie juste que les gauges sont présentes et ont des valeurs cohérentes
-    expect(updatedGauges.length).toBeGreaterThan(0);
-    updatedValues.forEach(value => {
-      expect(value).toBeGreaterThanOrEqual(0);
-    });
   });
 
-  test('devrait mettre à jour la gauge de la welcome card selon la date sélectionnée', async ({ page }) => {
+  test('devrait afficher la date sélectionnée dans la carte d\'accueil', async ({ page }) => {
     // Aller à la page historique et activer le mode sablier pour hier
     await timeMachineHelper.goToHistory();
     await page.waitForSelector('[role="grid"], .grid', { timeout: 10000 });
     await timeMachineHelper.activateTimeMachineMode(1);
-    
+
     await page.waitForSelector('[data-testid="time-machine-banner"]', { timeout: 5000 });
-    
+
     const yesterdayDate = format(subDays(new Date(), 1), 'yyyy-MM-dd');
     await page.goto(`/?date=${yesterdayDate}`);
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
-    
+
     if (await timeMachineHelper.isTimeMachineModeActive()) {
-      // Progress label of the "Aujourd'hui" card becomes the date ("Mercredi 14 octobre") in time machine mode
-      const goalLabel = page.getByText(/^(Lundi|Mardi|Mercredi|Jeudi|Vendredi|Samedi|Dimanche) \d+ \p{L}+$/u).first();
-      await expect(goalLabel).toBeVisible({ timeout: 5000 });
-      const updatedText = await goalLabel.textContent();
-      expect(updatedText ?? '').toMatch(/\d+/);
+      // « Mode sablier - Mercredi 14 octobre » at the top of the welcome card
+      const label = page.getByText(/^Mode sablier - (Lundi|Mardi|Mercredi|Jeudi|Vendredi|Samedi|Dimanche) \d+ \p{L}+$/u).first();
+      await expect(label).toBeVisible({ timeout: 5000 });
     }
   });
 

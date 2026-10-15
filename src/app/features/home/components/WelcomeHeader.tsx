@@ -4,7 +4,6 @@ import clsx from 'clsx';
 import type { HeatmapDay } from '@/app/features/historique';
 import { useCelebration } from '@/app/hooks/useCelebration';
 import { WelcomeHeaderGreeting } from './WelcomeHeaderGreeting';
-import { PeriodProgressBar } from '@/app/features/exercices';
 import type { PeriodProgress } from '@/app/features/exercices/hooks/usePeriodProgress';
 import { SeanceStartCard } from '@/app/features/seance';
 import { WelcomeHeaderCelebration } from './WelcomeHeaderCelebration';
@@ -62,8 +61,9 @@ export function WelcomeHeader({ userName, periodProgress, resetFrequency = null,
         <HomeWeekStrip weekData={weekData} resetFrequency={resetFrequency} onDayClick={onDayClick} />
       )}
 
+      {/* No « 0 / 49 exercices » here: a big number before starting is pressure.
+          The week strip shows the active days, the card today's dose. */}
       <SeanceStartCard />
-      <PeriodProgressBar progress={periodProgress} resetFrequency={resetFrequency} />
     </section>
   );
 }

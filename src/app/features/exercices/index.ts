@@ -7,7 +7,6 @@ export { CategoryCardWithProgress } from './components/CategoryCardWithProgress'
 export { CategoryBodypartsSection } from './components/CategoryBodypartsSection';
 export { CategoryAffinerSection } from './components/CategoryAffinerSection';
 export { CategoryActiveFiltersBar } from './components/CategoryActiveFiltersBar';
-export { PeriodProgressBar } from './components/PeriodProgressBar';
 
 // ExerciceForm sub-components
 export { ExerciceFormBodyparts } from './components/ExerciceForm/ExerciceFormBodyparts';

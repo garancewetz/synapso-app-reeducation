@@ -8,6 +8,9 @@ import {
   formatSeconds,
   parseCount,
   parseDurationSeconds,
+  splitRange,
+  sortForFlow,
+  getBodyPosition,
 } from '@/app/features/seance/utils/seance.utils';
 import type { Exercice } from '@/app/types';
 
@@ -184,5 +187,72 @@ describe('filterByEquipment', () => {
 
   it('optionally adds exercises without equipment', () => {
     expect(filterByEquipment(all, ['Lit/Tapis'], true).map((e) => e.id)).toEqual([1, 3, 4]);
+  });
+});
+
+describe('splitRange', () => {
+  it.each([
+    ['10-20', { min: 10, max: 20, unit: '' }],
+    ['2-3', { min: 2, max: 3, unit: '' }],
+    ['30 à 60 secondes', { min: 30, max: 60, unit: ' secondes' }],
+    ['30-60 sec', { min: 30, max: 60, unit: ' sec' }],
+  ])('splits "%s"', (text, expected) => {
+    expect(splitRange(text)).toEqual(expected);
+  });
+
+  it.each(['10', '10+20', '30 secondes', '', null, '20-10'])('returns null for %s', (text) => {
+    expect(splitRange(text)).toBeNull();
+  });
+
+  it('times a range with its lower bound', () => {
+    expect(parseDurationSeconds('30 à 60 secondes')).toBe(30);
+    expect(parseDurationSeconds('1-2 min')).toBe(60);
+  });
+});
+
+describe('sortForFlow', () => {
+  const make = (id: number, text: string, extra: Partial<Exercice> = {}): Exercice => ({
+    id,
+    name: `ex${id}`,
+    description: { text, comment: null },
+    workout: { repeat: null, series: null, duration: null },
+    equipments: [],
+    bodyparts: [],
+    category: 'UPPER_BODY',
+    completed: false,
+    completedToday: false,
+    completedAt: null,
+    pinned: false,
+    ...extra,
+  });
+
+  it('guesses the position from the instructions and the equipment', () => {
+    expect(getBodyPosition(make(1, 'Allongée sur le dos'))).toBe('lying');
+    expect(getBodyPosition(make(2, 'À plat ventre'))).toBe('lying');
+    expect(getBodyPosition(make(3, 'Debout à côté d’une porte'))).toBe('standing');
+    expect(getBodyPosition(make(4, 'Assise bien droite'))).toBe('seated');
+    expect(getBodyPosition(make(5, '', { equipments: ['Lit/Tapis'] }))).toBe('lying');
+    expect(getBodyPosition(make(6, '', { equipments: ['Stepper'] }))).toBe('standing');
+    expect(getBodyPosition(make(7, 'Gonfler les joues'))).toBe('seated');
+  });
+
+  it('goes lying → seated → standing, stretches last', () => {
+    const plan = sortForFlow([
+      make(1, 'Debout'),
+      make(2, 'Allongée', { category: 'STRETCHING' }),
+      make(3, 'Gonfler les joues', { category: 'FACE' }),
+      make(4, 'À plat ventre', { category: 'CORE' }),
+      make(5, 'Debout', { category: 'STRETCHING' }),
+    ]);
+    expect(plan.map((e) => e.id)).toEqual([4, 3, 1, 2, 5]);
+  });
+
+  it('groups by equipment within a position', () => {
+    const plan = sortForFlow([
+      make(1, 'Debout', { equipments: ['Stepper'] }),
+      make(2, 'Debout', { equipments: ['Porte'] }),
+      make(3, 'Debout', { equipments: ['Stepper'] }),
+    ]);
+    expect(plan.map((e) => e.id)).toEqual([2, 1, 3]);
   });
 });

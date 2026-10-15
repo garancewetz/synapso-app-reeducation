@@ -10,6 +10,10 @@ export function parseDurationSeconds(text: string | null | undefined): number | 
   if (!text) return null;
   const value = text.toLowerCase().replace(',', '.').trim();
 
+  // A range ("30 à 60 secondes", "30-60 sec") starts with its lower bound.
+  const range = splitRange(value);
+  if (range) return parseDurationSeconds(`${range.min}${range.unit}`);
+
   // "1:30" → 90
   const clock = value.match(/^(\d+):(\d{1,2})$/);
   if (clock) return Number(clock[1]) * 60 + Number(clock[2]);
@@ -39,6 +43,20 @@ export function parseCount(text: string | null | undefined): number | null {
   if (!match) return null;
   const count = Number(match[0]);
   return count > 0 ? count : null;
+}
+
+/**
+ * "10-20", "30 à 60 secondes", "2-3 séries" → { min: 10, max: 20, unit: '' }.
+ * A range asks for a decision each time; the session shows the lower bound and
+ * offers the upper one as optional. null when the text is not a range.
+ */
+export function splitRange(text: string | null | undefined): { min: number; max: number; unit: string } | null {
+  if (!text) return null;
+  const match = text.trim().match(/^(\d+)\s*(?:-|–|à)\s*(\d+)(\s*[^\d].*)?$/i);
+  if (!match) return null;
+  const min = Number(match[1]);
+  const max = Number(match[2]);
+  return max > min ? { min, max, unit: match[3] ?? '' } : null;
 }
 
 /** 90 → "1:30", 5 → "0:05" */
@@ -82,6 +100,48 @@ export function getTodayPlan(exercices: Exercice[]) {
   return { dose, doneToday, remainingToday: Math.max(0, dose - doneToday), pending };
 }
 
+/** Where the body is during the exercise — changing it costs energy. */
+export type BodyPosition = 'lying' | 'seated' | 'standing';
+
+const LYING = /allong|plat ventre|sur le dos|sur le ventre|\bdu lit\b|matelas/i;
+const STANDING = /debout|\bstep\b|escalier|marche|rambarde|balcon|piscine/i;
+const SEATED = /assise?\b|chaise/i;
+
+/**
+ * Best guess from the instructions and the equipment. Exercises that can be done
+ * anywhere (face, neck, hands) count as seated: no need to get up or lie down.
+ */
+export function getBodyPosition(exercice: Exercice): BodyPosition {
+  const text = `${exercice.name} ${exercice.description.text}`;
+  if (LYING.test(text)) return 'lying';
+  if (STANDING.test(text)) return 'standing';
+  if (SEATED.test(text)) return 'seated';
+  if (exercice.equipments.includes('Lit/Tapis') && !exercice.equipments.includes('Table')) return 'lying';
+  if (exercice.equipments.some((eq) => ['Stepper', 'Porte', 'Escaliers', 'Rambarde'].includes(eq))) return 'standing';
+  return 'seated';
+}
+
+const POSITION_ORDER: BodyPosition[] = ['lying', 'seated', 'standing'];
+
+/**
+ * Session order that spares energy: lying first, then seated, then standing (one
+ * way up, never down again), grouped by equipment so it is set up once, then the
+ * usual body order. Stretches stay at the end as a cool-down. Stable: on ties the
+ * planned order (pinned, most overdue) is kept.
+ */
+export function sortForFlow(exercices: Exercice[]): Exercice[] {
+  const key = (exercice: Exercice) => [
+    exercice.category === 'STRETCHING' ? 1 : 0,
+    POSITION_ORDER.indexOf(getBodyPosition(exercice)),
+  ];
+  const equipmentOf = (exercice: Exercice) => [...exercice.equipments].sort()[0] ?? '';
+  return [...exercices].sort((a, b) => {
+    const [sa, pa] = key(a);
+    const [sb, pb] = key(b);
+    return sa - sb || pa - pb || equipmentOf(a).localeCompare(equipmentOf(b)) || byBodyOrder(a, b);
+  });
+}
+
 const lastDoneTime = (exercice: Exercice) =>
   exercice.completedAt ? new Date(exercice.completedAt).getTime() : 0;
 
@@ -89,7 +149,7 @@ const lastDoneTime = (exercice: Exercice) =>
  * Picks at most `size` pending exercises for today's session:
  * pinned first, then the least recently done (never done = most urgent),
  * alternating body zones so a short session still works the whole body.
- * Returned in body order for a natural flow. `excludeIds`: already planned.
+ * Returned in an energy-saving order (see sortForFlow). `excludeIds`: already planned.
  */
 export function planSession(
   exercices: Exercice[],
@@ -115,7 +175,7 @@ export function planSession(
     picked.push(...rest.splice(bestIndex, 1));
   }
 
-  return picked.sort(byBodyOrder);
+  return sortForFlow(picked);
 }
 
 const SECONDS_PER_REPETITION = 4;
