@@ -32,12 +32,6 @@ export const queryKeys = {
     aggregated: (params: { targetDate?: string }) =>
       [...queryKeys.categoryStats.all, 'aggregated', params] as const,
   },
-  todayCompletedCount: {
-    all: ['todayCompletedCount'] as const,
-    lists: () => [...queryKeys.todayCompletedCount.all, 'list'] as const,
-    list: (params: { userId: number; dateKey: string | null }) =>
-      [...queryKeys.todayCompletedCount.lists(), params] as const,
-  },
   equipments: {
     all: ['equipments'] as const,
   },

@@ -79,7 +79,7 @@ export function useCompleteExercice({
       onCompleted?.(updatedExercice);
 
       // Invalider exercices (sauf les listes includeArchived:true utilisées pour les vues globales/épinglées)
-      // + history + todayCompletedCount. Les listes includeArchived:true sont déjà tenues à jour
+      // + history. Les listes includeArchived:true sont déjà tenues à jour
       // de façon optimiste via updateExercice (voir useExercices → updateExercice).
       queryClient.invalidateQueries({
         queryKey: ['exercices', 'list'],
@@ -94,15 +94,6 @@ export function useCompleteExercice({
       });
 
       queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
-
-      if (effectiveUser?.id) {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.todayCompletedCount.list({
-            userId: effectiveUser.id,
-            dateKey: targetDate,
-          }),
-        });
-      }
     },
     onError: (err) => {
       showToast(err instanceof Error ? err.message : 'Erreur lors de la mise à jour');

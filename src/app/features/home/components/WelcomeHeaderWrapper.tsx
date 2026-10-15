@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { WelcomeHeader } from './WelcomeHeader';
 import { useUser } from '@/app/contexts/UserContext';
 import { useDayDetailModal } from '@/app/contexts/DayDetailModalContext';
-import { useTodayCompletedCount } from '@/app/features/exercices';
+import { usePeriodProgress } from '@/app/features/exercices';
 import { useProgress } from '@/app/features/progress';
 import {
   getCurrentWeekData,
@@ -36,7 +36,7 @@ export const WelcomeHeaderWrapper = memo(function WelcomeHeaderWrapper({ initial
   const pathname = usePathname();
   const { effectiveUser, loading } = useUser();
   const { openDayDetail } = useDayDetailModal();
-  const completedToday = useTodayCompletedCount();
+  const periodProgress = usePeriodProgress();
   const { selectedDate, isTimeMachineMode, referenceDateKey, referenceDate } = useTimeContext();
   const displayName = effectiveUser?.name || "";
   const resetFrequency = effectiveUser?.resetFrequency || null;
@@ -117,7 +117,7 @@ export const WelcomeHeaderWrapper = memo(function WelcomeHeaderWrapper({ initial
     )}>
       <WelcomeHeader
         userName={displayName}
-        completedToday={completedToday}
+        periodProgress={periodProgress}
         resetFrequency={resetFrequency}
         weekData={weekData}
         progressDates={progressDates}

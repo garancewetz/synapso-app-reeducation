@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { useTodayCompletedCount } from '@/app/features/exercices';
+import { usePeriodProgress } from '../hooks/usePeriodProgress';
 import { useCelebration } from '@/app/hooks/useCelebration';
 import { useConfetti } from '@/app/contexts/ConfettiContext';
 
@@ -15,8 +15,8 @@ const CELEBRATION_EMOJIS = ['🎉', '🎊', '⭐', '💪', '🌟', '✨', '🏆'
 const CONFETTI_COLORS = ['#10b981', '#34d399', '#fbbf24', '#f59e0b', '#8b5cf6', '#ec4899', '#3b82f6', '#ef4444', '#06b6d4'];
 
 export function GlobalCelebration() {
-  const completedToday = useTodayCompletedCount();
-  const { showCelebration, animationKey } = useCelebration(completedToday);
+  const periodProgress = usePeriodProgress();
+  const { showCelebration, animationKey } = useCelebration(periodProgress);
   const { startGlobalCelebration, endGlobalCelebration } = useConfetti();
 
   useEffect(() => {

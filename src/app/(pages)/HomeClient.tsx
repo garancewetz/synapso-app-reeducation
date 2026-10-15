@@ -3,21 +3,18 @@
 import { useCallback, useMemo, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import { WelcomeHeaderWrapper } from '@/app/features/home';
 import { SegmentedControl } from '@/app/components/ui';
 import { UserIcon } from '@/app/components/ui/icons';
 import { BookmarkIcon } from '@/app/components/ui/icons';
-import { RocketIcon } from '@/app/components/ui/icons';
 import { useUser } from '@/app/contexts/UserContext';
-import { useLayoutContext } from '@/app/contexts/LayoutContext';
 import { useExercices, useExerciceHandlers } from '@/app/features/exercices';
 import { useProgressModal, useProgress } from '@/app/features/progress';
 import { useJournalNotes } from '@/app/features/journal';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/app/lib/api-queries';
-import { useHomeTabs, HomePinnedTab, HomeSuiviTab } from '@/app/features/home';
+import { useHomeTabs, HomePinnedTab } from '@/app/features/home';
 import { HomeExercicesView } from './HomeExercicesView';
 import { SeanceStartCard } from '@/app/features/seance';
 
@@ -36,10 +33,9 @@ type HomeClientProps = {
 export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps = {}) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
-  const initialTab = (tabFromUrl === 'pinned' || tabFromUrl === 'suivi' ? tabFromUrl : null) as 'pinned' | 'suivi' | null;
+  const initialTab = tabFromUrl === 'pinned' ? 'pinned' : null;
 
   const { effectiveUser, loading: userLoading } = useUser();
-  const { navMenuType } = useLayoutContext();
   const progressModal = useProgressModal();
   const queryClient = useQueryClient();
 
@@ -67,28 +63,16 @@ export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps
   });
 
   const tabOptions = useMemo(() => {
-    const getIcon = (iconName: 'UserIcon' | 'BookmarkIcon' | 'RocketIcon') => {
-      switch (iconName) {
-        case 'UserIcon':
-          return <UserIcon className="w-5 h-5" />;
-        case 'BookmarkIcon':
-          return <BookmarkIcon className="w-5 h-5" />;
-        case 'RocketIcon':
-          return <RocketIcon className="w-5 h-5" />;
-      }
-    };
+    const getIcon = (iconName: 'UserIcon' | 'BookmarkIcon') =>
+      iconName === 'UserIcon' ? <UserIcon className="w-5 h-5" /> : <BookmarkIcon className="w-5 h-5" />;
 
-    const options = navMenuType === 'slide'
-      ? tabOptionsData.filter(opt => opt.value !== 'suivi')
-      : tabOptionsData;
-    return options.map(opt => ({
+    return tabOptionsData.map(opt => ({
       value: opt.value,
       label: opt.label,
       icon: getIcon(opt.iconName),
     }));
-  }, [tabOptionsData, navMenuType]);
+  }, [tabOptionsData]);
 
-  const effectiveActiveTab = navMenuType === 'slide' && activeTab === 'suivi' ? 'exercices' : activeTab;
 
   // No-op stable pour afficher le bouton Partager (la logique est dans useShareProgress du ProgressCard)
   const handleShareProgress = useCallback(() => {}, []);
@@ -123,10 +107,7 @@ export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps
 
         {/* Contenu principal */}
         <div
-          className={clsx(
-            'px-3 md:px-6 lg:px-8 md:pb-8',
-            effectiveActiveTab === 'suivi' ? 'pb-40' : 'pb-12'
-          )}
+          className="px-3 md:px-6 lg:px-8 pb-12 md:pb-8"
           aria-live="polite"
           aria-busy={userLoading}
           aria-atomic="true"
@@ -167,7 +148,7 @@ export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps
                   <div>
                     <SegmentedControl
                       options={tabOptions}
-                      value={effectiveActiveTab}
+                      value={activeTab}
                       onChange={setActiveTab}
                       fullWidth
                       size="md"
@@ -176,9 +157,9 @@ export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps
                   </div>
                 )}
 
-                {effectiveActiveTab === 'exercices' && (exercicesSlot ?? <HomeExercicesView />)}
+                {activeTab === 'exercices' && (exercicesSlot ?? <HomeExercicesView />)}
 
-                {effectiveActiveTab === 'pinned' && (
+                {activeTab === 'pinned' && (
                   <HomePinnedTab
                     pinnedExercices={pinnedExercices}
                     pinnedProgress={pinnedProgress}
@@ -191,10 +172,6 @@ export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps
                     onArchive={handlePinnedUpdate}
                     onNoteUpdated={refetchNotes}
                   />
-                )}
-
-                {effectiveActiveTab === 'suivi' && (
-                  <HomeSuiviTab />
                 )}
 
               </MotionDiv>

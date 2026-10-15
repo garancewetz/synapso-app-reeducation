@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
 
-type TabValue = 'exercices' | 'pinned' | 'suivi';
+// "Suivi" removed: it duplicated the bottom-bar "Progression" and the menu (Notes).
+type TabValue = 'exercices' | 'pinned';
 
 type TabOptionData = {
   value: TabValue;
   label: string;
-  iconName: 'UserIcon' | 'BookmarkIcon' | 'RocketIcon';
+  iconName: 'UserIcon' | 'BookmarkIcon';
 };
 
 export function useHomeTabs(pinnedCount: number, initialTabFromUrl?: TabValue | null) {
@@ -30,12 +31,6 @@ export function useHomeTabs(pinnedCount: number, initialTabFromUrl?: TabValue | 
       value: 'pinned',
       label: pinnedCount > 0 ? `Épinglé (${pinnedCount})` : 'Épinglé',
       iconName: 'BookmarkIcon',
-    });
-
-    options.push({
-      value: 'suivi',
-      label: 'Suivi',
-      iconName: 'RocketIcon',
     });
 
     return options;

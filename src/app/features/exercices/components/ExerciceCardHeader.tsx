@@ -24,6 +24,14 @@ export function ExerciceCardHeader({ exercice, effectiveUserResetFrequency, onOp
   const showWeeklyBadge = isWeekly && weeklyCount > 0;
   const showDailyBadge = !isWeekly && exercice.completedToday;
 
+  // What to do, readable without expanding the card: "3 séries · 10× · 30 secondes"
+  const { series, repeat, duration } = exercice.workout;
+  const workoutSummary = [
+    series && series !== '1' && `${series} séries`,
+    repeat && `${repeat}×`,
+    duration,
+  ].filter(Boolean).join(' · ');
+
   return (
     <div className="relative mb-3 pr-24">
       <div className="flex items-center gap-2 min-w-0">
@@ -52,6 +60,9 @@ export function ExerciceCardHeader({ exercice, effectiveUserResetFrequency, onOp
           <h3 className="text-base md:text-lg font-semibold text-gray-800 leading-tight min-w-0">
             {exercice.name}
           </h3>
+          {workoutSummary && (
+            <p className="mt-1 text-sm font-medium text-gray-600">{workoutSummary}</p>
+          )}
         </div>
       </div>
 

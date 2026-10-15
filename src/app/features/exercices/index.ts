@@ -9,7 +9,7 @@ export { CategoryCardWithProgress } from './components/CategoryCardWithProgress'
 export { CategoryBodypartsSection } from './components/CategoryBodypartsSection';
 export { CategoryAffinerSection } from './components/CategoryAffinerSection';
 export { CategoryActiveFiltersBar } from './components/CategoryActiveFiltersBar';
-export { DailyGoalProgress } from './components/DailyGoalProgress';
+export { PeriodProgressBar } from './components/PeriodProgressBar';
 
 // ExerciceForm sub-components
 export { ExerciceFormCategory } from './components/ExerciceForm/ExerciceFormCategory';
@@ -26,7 +26,7 @@ export { useArchiveExercice } from './hooks/useArchiveExercice';
 export { useExerciceStatusFilter } from './hooks/useExerciceStatusFilter';
 export { useCategoryFilters } from './hooks/useCategoryFilters';
 export { useCategoryStats } from './hooks/useCategoryStats';
-export { useTodayCompletedCount } from './hooks/useTodayCompletedCount';
+export { usePeriodProgress } from './hooks/usePeriodProgress';
 export { useRelatedStretchingByCategory } from './hooks/useRelatedStretchingByCategory';
 export { useExerciceHandlers } from './hooks/useExerciceHandlers';
 

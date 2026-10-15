@@ -3,7 +3,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronIcon } from '@/app/components/ui/icons';
 import { ExerciceMedia } from './ExerciceMedia';
-import { Badge } from '@/app/components/ui';
 import type { Exercice } from '@/app/types';
 
 type Props = {
@@ -17,8 +16,9 @@ export function ExerciceCardExpandable({
   isExpanded,
   onLightboxOpen,
 }: Props) {
-  const hasWorkoutInfo = exercice.workout.series || exercice.workout.repeat || exercice.workout.duration;
-  const hasExpandableContent = exercice.description.text || exercice.media || hasWorkoutInfo || exercice.sharedBy;
+  // Séries / répétitions / durée are shown on the card header, always visible.
+  const hasExpandableContent =
+    exercice.description.text || exercice.description.comment || exercice.media || exercice.sharedBy;
 
   if (!hasExpandableContent) {
     return null;
@@ -74,34 +74,6 @@ export function ExerciceCardExpandable({
               >
                 {exercice.description.text}
               </motion.p>
-            )}
-            
-            {/* 3. Badges de paramètre (séries, répétitions, durée) */}
-            {hasWorkoutInfo && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.1 }}
-                className="flex flex-wrap gap-1.5"
-              >
-                {exercice.workout.series && exercice.workout.series !== '1' && (
-                  <Badge variant="workout">
-                    {exercice.workout.series} séries
-                  </Badge>
-                )}
-                
-                {exercice.workout.repeat && (
-                  <Badge variant="workout">
-                    {exercice.workout.repeat}x
-                  </Badge>
-                )}
-                
-                {exercice.workout.duration && (
-                  <Badge variant="workout">
-                    {exercice.workout.duration}
-                  </Badge>
-                )}
-              </motion.div>
             )}
             
             {/* 4. Conseil */}

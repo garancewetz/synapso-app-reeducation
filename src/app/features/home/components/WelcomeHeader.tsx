@@ -4,18 +4,17 @@ import clsx from 'clsx';
 import type { HeatmapDay } from '@/app/features/historique';
 import { useCelebration } from '@/app/hooks/useCelebration';
 import { WelcomeHeaderGreeting } from './WelcomeHeaderGreeting';
-import { DailyGoalProgress } from '@/app/features/exercices';
+import { PeriodProgressBar } from '@/app/features/exercices';
+import type { PeriodProgress } from '@/app/features/exercices/hooks/usePeriodProgress';
 import { WelcomeHeaderCelebration } from './WelcomeHeaderCelebration';
 import { WeekCalendar } from '@/app/features/historique';
 import { useTimeContext } from '@/app/contexts/TimeContext';
 import { formatShortDate } from '@/app/utils/date.utils';
 import { NAVIGATION_EMOJIS } from '@/app/constants/emoji.constants';
 
-const DAILY_GOAL = 5;
-
 type Props = {
   userName: string;
-  completedToday: number | null;
+  periodProgress: PeriodProgress | null;
   resetFrequency?: 'DAILY' | 'WEEKLY' | null;
   weekData?: HeatmapDay[];
   progressDates?: Set<string>;
@@ -23,13 +22,12 @@ type Props = {
   currentStreak?: number;
 };
 
-export function WelcomeHeader({ userName, completedToday, resetFrequency = null, weekData, progressDates, onDayClick, currentStreak = 0 }: Props) {
-  const { showCelebration, animationKey } = useCelebration(completedToday);
+export function WelcomeHeader({ userName, periodProgress, resetFrequency = null, weekData, progressDates, onDayClick, currentStreak = 0 }: Props) {
+  const { showCelebration, animationKey } = useCelebration(periodProgress);
   const { isTimeMachineMode, selectedDate } = useTimeContext();
   
-  const isLoading = completedToday === null;
-  const count = completedToday ?? 0;
-  const isGoalReached = !isLoading && count >= DAILY_GOAL;
+  const isGoalReached =
+    periodProgress !== null && periodProgress.total > 0 && periodProgress.done >= periodProgress.total;
 
   return (
     <div 
@@ -54,7 +52,7 @@ export function WelcomeHeader({ userName, completedToday, resetFrequency = null,
       )}
 
       <WelcomeHeaderGreeting userName={userName} resetFrequency={resetFrequency} currentStreak={currentStreak} />
-      <DailyGoalProgress completedToday={completedToday} />
+      <PeriodProgressBar progress={periodProgress} resetFrequency={resetFrequency} />
       
       {weekData && weekData.length === 7 && (
         <WeekCalendar 
