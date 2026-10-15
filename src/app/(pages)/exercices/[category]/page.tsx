@@ -17,6 +17,7 @@ import { EmptyState } from '@/app/components/EmptyState';
 import { AddButton } from '@/app/components/ui/AddButton';
 import { TouchLink } from '@/app/components/TouchLink';
 import { estimateMinutes } from '@/app/features/seance/utils/seance.utils';
+import { getRelatedStretching } from '@/app/features/exercices/utils/stretching.utils';
 import type { ExerciceCategory, ExerciceStatusFilter, Exercice } from '@/app/types/exercice';
 import { CATEGORY_LABELS, CATEGORY_ORDER } from '@/app/constants/exercice.constants';
 
@@ -163,6 +164,11 @@ export default function CategoryPage() {
   const todoExercices = filters.filteredExercices.filter((exercice) => !exercice.completed);
   const doneExercices = filters.filteredExercices.filter((exercice) => exercice.completed);
   const pendingInCategory = exercices.filter((exercice) => !exercice.completed);
+  // The zone session ends with these (same rule as « Étirements conseillés »).
+  const pendingStretches = getRelatedStretching(stretchingExercices, categoryParam).filter(
+    (exercice) => !exercice.completed
+  );
+  const sessionPlan = [...pendingInCategory, ...pendingStretches];
   // Filters only help with a long list: below this, reading beats filtering.
   const showFilters = exercices.length > FILTERS_THRESHOLD;
   const label = CATEGORY_LABELS[categoryParam];
@@ -218,7 +224,7 @@ export default function CategoryPage() {
         </header>
 
         {/* Bridge to the session: do this zone now, with the timer. */}
-        {!loadingExercices && pendingInCategory.length > 0 && (
+        {!loadingExercices && sessionPlan.length > 0 && (
           <TouchLink
             href={preserveDate(`/seance?category=${categoryParam}`)}
             className="mt-4 flex items-center gap-4 rounded-2xl bg-emerald-500 px-5 py-3.5 text-white shadow-md active:scale-[0.98] transition-transform"
@@ -227,7 +233,15 @@ export default function CategoryPage() {
             <span>
               <span className="block text-lg font-semibold">Lancer la séance</span>
               <span className="block text-sm text-emerald-50">
-                {label} · {pendingInCategory.length} exercice{pendingInCategory.length > 1 ? 's' : ''} · environ {estimateMinutes(pendingInCategory)} min
+                {[
+                  label,
+                  pendingInCategory.length > 0 &&
+                    `${pendingInCategory.length} exercice${pendingInCategory.length > 1 ? 's' : ''}` +
+                      (pendingStretches.length > 0 ? ` + ${pendingStretches.length} étirement${pendingStretches.length > 1 ? 's' : ''}` : ''),
+                  pendingInCategory.length === 0 &&
+                    `${pendingStretches.length} étirement${pendingStretches.length > 1 ? 's' : ''}`,
+                  `environ ${estimateMinutes(sessionPlan)} min`,
+                ].filter(Boolean).join(' · ')}
               </span>
             </span>
           </TouchLink>

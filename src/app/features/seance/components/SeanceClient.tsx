@@ -10,6 +10,7 @@ import { useExercices } from '@/app/features/exercices/hooks/useExercices';
 import { usePreserveDateParam } from '@/app/features/time-machine/hooks/usePreserveDateParam';
 import { CloseIcon } from '@/app/components/ui/icons';
 import { SeanceStep } from './SeanceStep';
+import { getRelatedStretching } from '@/app/features/exercices/utils/stretching.utils';
 import { useSessionSignals } from '../hooks/useSessionSignals';
 import { EXTRA_BATCH_SIZE, estimateMinutes, getTodayPlan, planSession } from '../utils/seance.utils';
 
@@ -18,11 +19,19 @@ export function SeanceClient() {
   // Same query as the home (includeArchived: true) → served instantly from the
   // persisted cache; buildSessionQueue drops archived exercises.
   const { exercices: allExercices, loading, updateExercice } = useExercices({ includeArchived: true });
-  // ?category=CORE (from a zone page): play every pending exercise of that zone.
+  // ?category=CORE (from a zone page): play every pending exercise of that zone,
+  // then its related stretches — STRETCHING comes last in the body order, so
+  // planSession naturally puts them at the end.
   const categoryParam = useSearchParams().get('category')?.toUpperCase() as ExerciceCategory | undefined;
   const zone = categoryParam && CATEGORY_ORDER.includes(categoryParam) ? categoryParam : null;
   const exercices = useMemo(
-    () => (zone ? allExercices.filter((exercice) => exercice.category === zone) : allExercices),
+    () =>
+      zone
+        ? [
+            ...allExercices.filter((exercice) => exercice.category === zone),
+            ...getRelatedStretching(allExercices, zone),
+          ]
+        : allExercices,
     [allExercices, zone]
   );
   const preserveDate = usePreserveDateParam();
