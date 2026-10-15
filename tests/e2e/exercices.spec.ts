@@ -75,7 +75,7 @@ test.describe('Exercices', () => {
     await page.getByPlaceholder('Ajoutez un conseil ou une remarque...').fill(newComment);
 
     // Modifier catégorie et parties du corps
-    await page.getByRole('button', { name: 'Milieu' }).click();
+    await page.getByRole('button', { name: 'Tronc' }).click();
     await page.getByRole('button', { name: 'Dos' }).click();
 
     // Modifier paramètres workout et enregistrer
@@ -115,7 +115,7 @@ test.describe('Exercices', () => {
     );
 
     // Vérifier la catégorie
-    await expect(page.getByRole('button', { name: 'Milieu' })).toHaveAttribute(
+    await expect(page.getByRole('button', { name: 'Tronc' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );

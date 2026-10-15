@@ -8,7 +8,7 @@ import { usePreserveDateParam } from '@/app/features/time-machine/hooks/usePrese
 import { CloseIcon } from '@/app/components/ui/icons';
 import { SeanceStep } from './SeanceStep';
 import { useSessionSignals } from '../hooks/useSessionSignals';
-import { buildSessionQueue } from '../utils/seance.utils';
+import { EXTRA_BATCH_SIZE, estimateMinutes, getTodayPlan, planSession } from '../utils/seance.utils';
 
 export function SeanceClient() {
   const { effectiveUser } = useUser();
@@ -20,28 +20,48 @@ export function SeanceClient() {
   const { unlockAudio, signalEnd } = useSessionSignals();
 
   // Snapshot of the session order, taken once: completing an exercise must not
-  // reshuffle what comes next.
+  // reshuffle what comes next. `target` = how many exercises the session aims
+  // for: what is left of today's dose (or a small batch when opened from "En faire
+  // plus"), grown by "Encore un peu ?" batches. null until the list is known.
   const [queue, setQueue] = useState<number[] | null>(null);
+  const [target, setTarget] = useState<number | null>(null);
   const [position, setPosition] = useState(0);
   const [doneIds, setDoneIds] = useState<number[]>([]);
   const doneCount = doneIds.length;
   const [skipped, setSkipped] = useState<number[]>([]);
 
+  // doneIds: a just-validated exercise stays pending in the cache until the
+  // server answers — it must never be planned again.
+  const knownIds = useMemo(
+    () => new Set([...(queue ?? []), ...skipped, ...doneIds]),
+    [queue, skipped, doneIds]
+  );
+
   useEffect(() => {
-    if (!effectiveUser || loading) return;
-    const pendingIds = buildSessionQueue(exercices).map((exercice) => exercice.id);
-    // The first snapshot may come from the persisted cache (instant start); when the
-    // background refetch brings exercises added meanwhile (e.g. on another device),
-    // append them instead of rebuilding — the order already shown must not move.
+    if (!effectiveUser || loading || target !== null) return;
+    const { remainingToday } = getTodayPlan(exercices);
+    setTarget(remainingToday > 0 ? remainingToday : EXTRA_BATCH_SIZE);
+  }, [effectiveUser, loading, exercices, target]);
+
+  useEffect(() => {
+    if (!effectiveUser || loading || target === null) return;
+    // The first snapshot may come from the persisted cache (instant start). If the
+    // background refetch shows the session is short of its target (exercises added
+    // meanwhile, e.g. on another device), top it up at the end — what is already
+    // shown never moves.
     setQueue((current) => {
-      if (current === null) return pendingIds;
-      // doneIds: a just-validated exercise stays pending in the cache until the
-      // server answers — it must not come back.
-      const known = new Set([...current, ...skipped, ...doneIds]);
-      const added = pendingIds.filter((id) => !known.has(id));
-      return added.length > 0 ? [...current, ...added] : current;
+      if (current === null) return planSession(exercices, target).map((exercice) => exercice.id);
+      if (current.length >= target) return current;
+      const extra = planSession(exercices, target - current.length, knownIds);
+      return extra.length > 0 ? [...current, ...extra.map((exercice) => exercice.id)] : current;
     });
-  }, [effectiveUser, loading, exercices, skipped, doneIds]);
+  }, [effectiveUser, loading, exercices, target, knownIds]);
+
+  // What "Encore un peu ?" would add: computed on fresh data, never pressuring.
+  const extraBatch = useMemo(
+    () => (queue === null ? [] : planSession(exercices, EXTRA_BATCH_SIZE, knownIds)),
+    [queue, exercices, knownIds]
+  );
 
   // Always render the freshest copy (completedToday may change after a refetch);
   // drop exercises archived or deleted meanwhile.
@@ -67,11 +87,18 @@ export function SeanceClient() {
     next();
   };
 
-  const resumeSkipped = () => {
-    setQueue(skipped);
-    setSkipped([]);
-    setPosition(0);
+  // Both continue from where we are: the next items are appended after `position`.
+  const appendToSession = (ids: number[]) => {
+    setQueue((current) => [...(current ?? []), ...ids]);
+    setTarget((t) => Math.max(t ?? 0, (queue?.length ?? 0) + ids.length));
   };
+
+  const resumeSkipped = () => {
+    setSkipped([]);
+    appendToSession(skipped);
+  };
+
+  const doMore = () => appendToSession(extraBatch.map((exercice) => exercice.id));
 
   return (
     <div className="min-h-dvh max-w-xl mx-auto px-4 pt-[max(1rem,env(safe-area-inset-top))]">
@@ -122,22 +149,33 @@ export function SeanceClient() {
               ? `${doneCount} exercice${doneCount > 1 ? 's' : ''} fait${doneCount > 1 ? 's' : ''}.`
               : 'Aucun exercice ne t’attend pour le moment.'}
           </p>
+          {/* Finishing is the success, not a debt: "Terminer" is the main action,
+              doing more is an open door. */}
           <div className="flex flex-col gap-3 pt-4">
+            <Link
+              href={homeHref}
+              className="w-full min-h-[56px] rounded-2xl bg-slate-900 text-white text-lg font-semibold flex items-center justify-center"
+            >
+              {doneCount > 0 ? 'Terminer pour aujourd’hui' : 'Retour à l’accueil'}
+            </Link>
             {skipped.length > 0 && (
               <button
                 type="button"
                 onClick={resumeSkipped}
-                className="w-full min-h-[56px] rounded-2xl bg-slate-900 text-white text-lg font-semibold"
+                className="w-full min-h-[56px] rounded-2xl bg-white border border-slate-200 text-slate-800 text-lg font-semibold"
               >
-                Reprendre les {skipped.length} exercice{skipped.length > 1 ? 's' : ''} passé{skipped.length > 1 ? 's' : ''}
+                Reprendre {skipped.length > 1 ? `les ${skipped.length} exercices passés` : 'l’exercice passé'}
               </button>
             )}
-            <Link
-              href={homeHref}
-              className="w-full min-h-[56px] rounded-2xl bg-white border border-slate-200 text-slate-800 text-lg font-semibold flex items-center justify-center"
-            >
-              Retour à l&apos;accueil
-            </Link>
+            {extraBatch.length > 0 && (
+              <button
+                type="button"
+                onClick={doMore}
+                className="w-full min-h-[56px] rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-lg font-semibold"
+              >
+                Encore un peu ? {extraBatch.length} exercice{extraBatch.length > 1 ? 's' : ''} · ~{estimateMinutes(extraBatch)} min
+              </button>
+            )}
           </div>
         </section>
       )}

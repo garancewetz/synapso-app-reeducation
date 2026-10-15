@@ -35,13 +35,16 @@ export function PeriodProgressBar({ progress, resetFrequency }: Props) {
           {label}
         </span>
         <span className="text-sm font-semibold text-gray-700" aria-live="polite" aria-atomic="true">
-          {isLoading ? '...' : `${done} / ${total} exercice${total > 1 ? 's' : ''}`}
+          {isLoading ? '...' : `${Math.min(done, total)} / ${total} exercice${total > 1 ? 's' : ''}`}
+          {!isLoading && done > total && (
+            <span className="text-emerald-600 ml-1" aria-label={`${done - total} en bonus`}>+{done - total}</span>
+          )}
         </span>
       </div>
       <div
         className="h-2.5 bg-gray-100 rounded-full overflow-hidden relative"
         role="progressbar"
-        aria-valuenow={done}
+        aria-valuenow={Math.min(done, total)}
         aria-valuemin={0}
         aria-valuemax={total}
         aria-label={isLoading ? 'Progression : chargement' : `Progression : ${done} sur ${total} exercices faits`}

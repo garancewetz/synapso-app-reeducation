@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import type { Exercice } from '@/app/types/exercice';
 import { HomeExercicesTab } from '@/app/features/home';
-import { useExercices, useRelatedStretchingByCategory } from '@/app/features/exercices';
+import { useExercices } from '@/app/features/exercices';
 
 type Props = {
   initialExercices?: Exercice[];
@@ -14,13 +14,11 @@ export function HomeExercicesView({ initialExercices }: Props = {}) {
     includeArchived: true,
     initialData: initialExercices,
   });
-  const { relatedStretchingByCategory } = useRelatedStretchingByCategory();
   const archivedCount = useMemo(() => exercices.filter(e => e.archived).length, [exercices]);
 
   return (
     <HomeExercicesTab
       exercices={exercices}
-      relatedStretchingByCategory={relatedStretchingByCategory}
       archivedCount={archivedCount}
       error={error}
       loading={loading}
