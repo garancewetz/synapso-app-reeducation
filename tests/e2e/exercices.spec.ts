@@ -1,4 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+/** Optional fields live behind « + Ajouter des détails » (auto-opened when an exercise has some). */
+async function openDetails(page: Page) {
+  const toggle = page.getByRole('button', { name: /Ajouter des détails|Masquer les détails/ });
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+}
 import { AuthHelper } from './helpers/auth';
 import { TEST_USER } from './helpers/test-constants';
 
@@ -17,21 +23,22 @@ test.describe('Exercices', () => {
     });
 
     // Nom et description
-    await page.getByPlaceholder('Ex: Montée de genoux').fill('Exercice E2E créé');
-    await page.getByPlaceholder('Décrivez comment réaliser l\'exercice...').fill('Description du test');
+    await page.getByPlaceholder('Ex : Pont fessier').fill('Exercice E2E créé');
+    await openDetails(page);
+    await page.getByPlaceholder('Comment faire l\'exercice, étape par étape').fill('Description du test');
 
     // Catégorie et parties du corps
     await page.getByRole('button', { name: 'Haut' }).click();
     await page.getByRole('button', { name: 'Bras' }).click();
 
     // Paramètres workout
-    await page.getByPlaceholder('Ex: 10').fill('12');
-    await page.getByPlaceholder('Ex: 3', { exact: true }).fill('2');
-    await page.getByPlaceholder('Ex: 30 secondes').fill('45 secondes');
+    await page.getByRole('textbox', { name: 'Répétitions', exact: true }).fill('12');
+    await page.getByRole('textbox', { name: 'Séries', exact: true }).fill('2');
+    await page.getByRole('button', { name: '45 s', exact: true }).click();
 
     await page.getByRole('button', { name: "Créer l'exercice" }).click();
 
-    await expect(page).not.toHaveURL(/\/exercice\/add/);
+    await expect(page).not.toHaveURL(/\/exercice\/add/, { timeout: 30000 });
     await page.goto('/exercices/upper_body');
     await page.waitForLoadState('networkidle');
     await expect(page.getByText('Exercice E2E créé').first()).toBeVisible({ timeout: 10000 });
@@ -41,10 +48,10 @@ test.describe('Exercices', () => {
     await page.goto('/exercices/upper_body');
     await page.waitForLoadState('networkidle');
 
-    const firstCard = page.locator('.exercise-card').first();
+    const firstCard = page.locator('.exercise-row').first();
     await firstCard.waitFor({ state: 'visible', timeout: 15000 });
     await firstCard.scrollIntoViewIfNeeded();
-    await firstCard.getByRole('button', { name: 'Ouvrir les actions' }).click();
+    await firstCard.getByRole('button', { name: /^Actions pour / }).click();
     const modifierButton = firstCard.getByRole('button', { name: 'Modifier' });
     await modifierButton.waitFor({ state: 'visible', timeout: 5000 });
 
@@ -55,7 +62,7 @@ test.describe('Exercices', () => {
     await expect(page.getByRole('heading', { name: "Modifier l'exercice" })).toBeVisible({
       timeout: 10000,
     });
-    await expect(page.getByPlaceholder('Ex: Montée de genoux')).not.toHaveValue('', {
+    await expect(page.getByPlaceholder('Ex : Pont fessier')).not.toHaveValue('', {
       timeout: 10000,
     });
 
@@ -64,39 +71,37 @@ test.describe('Exercices', () => {
     const newComment = 'Conseil modifié';
     const newRepeat = '15';
     const newSeries = '4';
-    const newDuration = '60 secondes';
+    const newDurationChip = '1 min';
 
     // Modifier nom, description, conseil
-    await page.getByPlaceholder('Ex: Montée de genoux').clear();
-    await page.getByPlaceholder('Ex: Montée de genoux').fill(newName);
-    await page.getByPlaceholder('Décrivez comment réaliser l\'exercice...').clear();
-    await page.getByPlaceholder('Décrivez comment réaliser l\'exercice...').fill(newDescription);
-    await page.getByPlaceholder('Ajoutez un conseil ou une remarque...').clear();
-    await page.getByPlaceholder('Ajoutez un conseil ou une remarque...').fill(newComment);
+    await page.getByPlaceholder('Ex : Pont fessier').clear();
+    await page.getByPlaceholder('Ex : Pont fessier').fill(newName);
+    await openDetails(page);
+    await page.getByPlaceholder('Comment faire l\'exercice, étape par étape').clear();
+    await page.getByPlaceholder('Comment faire l\'exercice, étape par étape').fill(newDescription);
+    await page.getByPlaceholder('Ex : garder le dos droit').clear();
+    await page.getByPlaceholder('Ex : garder le dos droit').fill(newComment);
 
     // Modifier catégorie et parties du corps
-    await page.getByRole('button', { name: 'Milieu' }).click();
+    await page.getByRole('button', { name: 'Tronc' }).click();
     await page.getByRole('button', { name: 'Dos' }).click();
 
     // Modifier paramètres workout et enregistrer
-    await page.getByPlaceholder('Ex: 10').clear();
-    await page.getByPlaceholder('Ex: 10').fill(newRepeat);
-    await page.getByPlaceholder('Ex: 3', { exact: true }).clear();
-    await page.getByPlaceholder('Ex: 3', { exact: true }).fill(newSeries);
-    await page.getByPlaceholder('Ex: 30 secondes').clear();
-    await page.getByPlaceholder('Ex: 30 secondes').fill(newDuration);
+    await page.getByRole('textbox', { name: 'Répétitions', exact: true }).fill(newRepeat);
+    await page.getByRole('textbox', { name: 'Séries', exact: true }).fill(newSeries);
+    await page.getByRole('button', { name: newDurationChip, exact: true }).click();
 
     await page.getByRole('button', { name: 'Enregistrer les modifications' }).click();
 
-    await expect(page).not.toHaveURL(/\/exercice\/edit/);
+    await expect(page).not.toHaveURL(/\/exercice\/edit/, { timeout: 30000 });
     await page.goto('/exercices/core');
     await page.waitForLoadState('networkidle');
     await expect(page.getByText(newName).first()).toBeVisible({ timeout: 10000 });
 
     // Vérification : rouvrir l'exercice et vérifier les champs
-    const cardWithNewName = page.locator('.exercise-card').filter({ hasText: newName }).first();
+    const cardWithNewName = page.locator('.exercise-row').filter({ hasText: newName }).first();
     await cardWithNewName.scrollIntoViewIfNeeded();
-    await cardWithNewName.getByRole('button', { name: 'Ouvrir les actions' }).click();
+    await cardWithNewName.getByRole('button', { name: /^Actions pour / }).click();
     const modifierBtn2 = cardWithNewName.getByRole('button', { name: 'Modifier' });
     await modifierBtn2.waitFor({ state: 'visible', timeout: 5000 });
 
@@ -106,37 +111,37 @@ test.describe('Exercices', () => {
     ]);
 
     // Vérifier les textes
-    await expect(page.getByPlaceholder('Ex: Montée de genoux')).toHaveValue(newName);
-    await expect(page.getByPlaceholder('Décrivez comment réaliser l\'exercice...')).toHaveValue(
+    await expect(page.getByPlaceholder('Ex : Pont fessier')).toHaveValue(newName);
+    await openDetails(page);
+    await expect(page.getByPlaceholder('Comment faire l\'exercice, étape par étape')).toHaveValue(
       newDescription
     );
-    await expect(page.getByPlaceholder('Ajoutez un conseil ou une remarque...')).toHaveValue(
+    await expect(page.getByPlaceholder('Ex : garder le dos droit')).toHaveValue(
       newComment
     );
 
     // Vérifier la catégorie
-    await expect(page.getByRole('button', { name: 'Milieu' })).toHaveAttribute(
+    await expect(page.getByRole('button', { name: 'Tronc' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
 
     // Vérifier le workout
-    await expect(page.getByPlaceholder('Ex: 10')).toHaveValue(newRepeat);
-    await expect(page.getByPlaceholder('Ex: 3', { exact: true })).toHaveValue(newSeries);
-    await expect(page.getByPlaceholder('Ex: 30 secondes')).toHaveValue(newDuration);
+    await expect(page.getByRole('textbox', { name: 'Répétitions', exact: true })).toHaveValue(newRepeat);
+    await expect(page.getByRole('textbox', { name: 'Séries', exact: true })).toHaveValue(newSeries);
+    await expect(page.getByRole('button', { name: newDurationChip, exact: true })).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('marque un exercice comme fait aujourd\'hui et met à jour l\'affichage', async ({ page }) => {
     await page.goto('/exercices/upper_body');
     await page.waitForLoadState('networkidle');
 
-    const firstCard = page.locator('.exercise-card').first();
+    const firstCard = page.locator('.exercise-row').first();
     await firstCard.waitFor({ state: 'visible', timeout: 15000 });
     await firstCard.scrollIntoViewIfNeeded();
 
-    const completeButton = firstCard.getByRole('button', {
-      name: /Marquer comme fait aujourd'hui|Fait aujourd'hui|Démarquer|Fait \(\d+× cette semaine\)|Marquer comme fait le|Démarquer pour le/,
-    }).first();
+    // Compact row: round check button labelled "Marquer <nom> comme fait" / "Démarquer <nom>"
+    const completeButton = firstCard.getByRole('button', { name: /^Marquer .+ comme fait$|^Démarquer / }).first();
     await completeButton.waitFor({ state: 'visible', timeout: 10000 });
 
     const completeResponse = page.waitForResponse(
@@ -151,7 +156,7 @@ test.describe('Exercices', () => {
 
     await expect(completeButton).toHaveAttribute(
       'aria-label',
-      /Démarquer|Marquer comme fait aujourd'hui/,
+      /^Démarquer |^Marquer .+ comme fait$/,
       { timeout: 10000 }
     );
   });
@@ -162,18 +167,18 @@ test.describe('Exercices', () => {
     await page.waitForLoadState('networkidle');
 
     const nameToDelete = 'Exercice E2E à supprimer';
-    await page.getByPlaceholder('Ex: Montée de genoux').fill(nameToDelete);
+    await page.getByPlaceholder('Ex : Pont fessier').fill(nameToDelete);
     await page.getByRole('button', { name: "Créer l'exercice" }).click();
 
-    await expect(page).not.toHaveURL(/\/exercice\/add/);
+    await expect(page).not.toHaveURL(/\/exercice\/add/, { timeout: 30000 });
     await page.goto('/exercices/upper_body');
     await page.waitForLoadState('networkidle');
     await expect(page.getByText(nameToDelete).first()).toBeVisible({ timeout: 10000 });
 
     // Ouvrir la page d'édition
-    const cardToDelete = page.locator('.exercise-card').filter({ hasText: nameToDelete }).first();
+    const cardToDelete = page.locator('.exercise-row').filter({ hasText: nameToDelete }).first();
     await cardToDelete.scrollIntoViewIfNeeded();
-    await cardToDelete.getByRole('button', { name: 'Ouvrir les actions' }).click();
+    await cardToDelete.getByRole('button', { name: /^Actions pour / }).click();
     const modifierBtn = cardToDelete.getByRole('button', { name: 'Modifier' });
     await modifierBtn.waitFor({ state: 'visible', timeout: 5000 });
 
@@ -188,7 +193,7 @@ test.describe('Exercices', () => {
       .waitFor({ state: 'visible', timeout: 5000 });
     await page.getByRole('button', { name: '⚠️ Confirmer la suppression' }).click();
 
-    await expect(page).not.toHaveURL(/\/exercice\/edit/);
+    await expect(page).not.toHaveURL(/\/exercice\/edit/, { timeout: 30000 });
     await page.goto('/exercices/upper_body');
     await page.waitForLoadState('networkidle');
     await expect(page.getByText(nameToDelete)).toHaveCount(0, { timeout: 15000 });

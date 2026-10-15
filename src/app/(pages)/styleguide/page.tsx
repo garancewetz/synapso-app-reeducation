@@ -273,7 +273,7 @@ export default function StyleguidePage() {
               onClick={() => setActiveCategory(activeCategory === 'UPPER_BODY' ? null : 'UPPER_BODY')}
             />
             <FilterBadge
-              label="Bas du corps"
+              label="Jambes"
               icon="🦵"
               count={5}
               isActive={activeCategory === 'LOWER_BODY'}
@@ -625,11 +625,11 @@ export default function StyleguidePage() {
         <SubSection title="Catégories d'exercices">
           <div className="flex flex-wrap gap-3">
             {[
-              { emoji: '🦺', label: 'Haut du corps' },
-              { emoji: '👉', label: 'Milieu / Core' },
-              { emoji: '👖', label: 'Bas du corps' },
+              { emoji: '💪', label: 'Haut du corps' },
+              { emoji: '🧍', label: 'Tronc' },
+              { emoji: '🦵', label: 'Jambes' },
               { emoji: '🧘‍♀️', label: 'Étirements' },
-              { emoji: '🧑', label: 'Maxillo-faciale' },
+              { emoji: '🙂', label: 'Visage' },
               { emoji: '💬', label: 'Orthophonie' },
               { emoji: '🏋️', label: 'Physique' },
             ].map(({ emoji, label }) => (
@@ -649,8 +649,8 @@ export default function StyleguidePage() {
               { emoji: '🏋️', label: 'Épaules' },
               { emoji: '🦒', label: 'Cou / Nuque' },
               { emoji: '👄', label: 'Mâchoire' },
-              { emoji: '🔙', label: 'Dos' },
-              { emoji: '🦴', label: 'Bassin' },
+              { emoji: '🦴', label: 'Dos' },
+              { emoji: '🩲', label: 'Bassin' },
               { emoji: '🎯', label: 'Ventre' },
               { emoji: '🦵', label: 'Jambes' },
               { emoji: '🍑', label: 'Fessier' },

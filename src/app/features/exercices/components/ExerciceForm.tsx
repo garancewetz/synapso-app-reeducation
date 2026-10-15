@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useUser } from '@/app/contexts/UserContext';
 import { ErrorMessage, FormActions, Loader } from '@/app/components';
 import { Button } from '@/app/components/ui';
@@ -95,19 +95,24 @@ type Props = {
   onSuccess?: () => void;
   onCancel?: () => void;
   initialCategory?: ExerciceCategory;
+  /** Create a new exercise pre-filled from this one (« Dupliquer »). */
+  duplicateFromId?: number;
 };
 
-export function ExerciceForm({ exerciceId, onSuccess, onCancel, initialCategory }: Props) {
+export function ExerciceForm({ exerciceId, onSuccess, onCancel, initialCategory, duplicateFromId }: Props) {
   const { effectiveUser } = useUser();
   const { equipments: allEquipments, equipmentIconsMap, loading: loadingEquipments } = useAllEquipments();
 
   const isCreateMode = !exerciceId;
-  const draft = isCreateMode ? loadDraft(initialCategory) : null;
+  const sourceId = exerciceId ?? duplicateFromId;
+  const draft = isCreateMode && !duplicateFromId ? loadDraft(initialCategory) : null;
 
   const [formData, setFormData] = useState<FormDataState>(() =>
     draft ? draft.formData : getDefaultFormData(initialCategory)
   );
-  const [initialLoading, setInitialLoading] = useState(!!exerciceId);
+  const [initialLoading, setInitialLoading] = useState(!!sourceId);
+  const userId = effectiveUser?.id;
+  const loadedSourceRef = useRef<number | null>(null);
   const [error, setError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -140,12 +145,17 @@ export function ExerciceForm({ exerciceId, onSuccess, onCancel, initialCategory 
   }, [hasUnsavedDraft]);
 
   useEffect(() => {
-    if (exerciceId && effectiveUser) {
-      fetch(`/api/exercices/${exerciceId}?userId=${effectiveUser.id}`, { credentials: 'include' })
+    // Load once per exercise: depending on the effectiveUser object made every user
+    // refetch (e.g. after the persisted cache restores) reload the exercise and wipe
+    // what was being typed.
+    if (sourceId && userId && loadedSourceRef.current !== sourceId) {
+      loadedSourceRef.current = sourceId;
+      fetch(`/api/exercices/${sourceId}?userId=${userId}`, { credentials: 'include' })
         .then((res) => res.json())
         .then((data) => {
+          const isDuplicate = !exerciceId;
           setFormData({
-            name: data.name || '',
+            name: isDuplicate ? `${data.name || ''} (copie)` : data.name || '',
             descriptionText: data.description?.text || '',
             descriptionComment: data.description?.comment || '',
             workoutRepeat: data.workout?.repeat || '',
@@ -154,7 +164,9 @@ export function ExerciceForm({ exerciceId, onSuccess, onCancel, initialCategory 
             category: data.category || 'UPPER_BODY',
             bodyparts: data.bodyparts || [],
             equipments: data.equipments || [],
-            media: data.media || null,
+            // Never share photos with a copy: deleting one would delete the other's
+            // Cloudinary files.
+            media: isDuplicate ? null : data.media || null,
           });
         })
         .catch(() => {
@@ -164,7 +176,7 @@ export function ExerciceForm({ exerciceId, onSuccess, onCancel, initialCategory 
           setInitialLoading(false);
         });
     }
-  }, [exerciceId, effectiveUser]);
+  }, [sourceId, exerciceId, userId]);
 
   const toggleBodypart = (bodypart: string) => {
     setFormData((prev) => ({
@@ -224,23 +236,16 @@ export function ExerciceForm({ exerciceId, onSuccess, onCancel, initialCategory 
         loadingEquipments={loadingEquipments}
       />
 
-      <div className="space-y-3 pt-4">
-        <Button
-          variant="secondary"
-          onClick={() => {
-            if (hasUnsavedDraft && !window.confirm(ABANDON_CONFIRM_MESSAGE)) return;
-            if (isCreateMode) clearDraft();
-            onCancel?.();
-          }}
-        >
-          Annuler
-        </Button>
-
-        <FormActions
-          loading={createOrUpdateMutation.isPending || deleteMutation.isPending}
-          onSubmitLabel={exerciceId ? 'Enregistrer les modifications' : 'Créer l\'exercice'}
-        />
-      </div>
+      {/* Main action first, under the thumb; cancelling is the secondary choice. */}
+      <FormActions
+        loading={createOrUpdateMutation.isPending || deleteMutation.isPending}
+        onSubmitLabel={exerciceId ? 'Enregistrer les modifications' : 'Créer l\'exercice'}
+        onCancel={() => {
+          if (hasUnsavedDraft && !window.confirm(ABANDON_CONFIRM_MESSAGE)) return;
+          if (isCreateMode) clearDraft();
+          onCancel?.();
+        }}
+      />
 
       {exerciceId && (
         <div className="pt-2 border-t border-gray-200">

@@ -4,9 +4,11 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import clsx from 'clsx';
-import { ExerciceCard, useExercices, useExerciceStatusFilter, useExerciceHandlers, CategoryActiveFiltersBar } from '@/app/features/exercices';
+import { ExerciceRow, useExercices, useExerciceStatusFilter, useExerciceHandlers, CategoryActiveFiltersBar } from '@/app/features/exercices';
+import { TouchLink } from '@/app/components/TouchLink';
+import { estimateMinutes, filterByEquipment } from '@/app/features/seance/utils/seance.utils';
 import { EmptyState } from '@/app/components/EmptyState';
-import { StatusFilterSection, EquipmentFilterBadge, AddButton } from '@/app/components/ui';
+import { EquipmentFilterBadge } from '@/app/components/ui';
 import { useLayoutContext } from '@/app/contexts/LayoutContext';
 import { useHandPreference } from '@/app/hooks/useHandPreference';
 import { NAVIGATION_EMOJIS } from '@/app/constants/emoji.constants';
@@ -14,11 +16,9 @@ import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
   CATEGORY_ICONS,
-  EXERCICE_STATUS_FILTER_OPTIONS
 } from '@/app/constants/exercice.constants';
 import { getEquipmentIcon } from '@/app/constants/equipment.constants';
 import { useEquipmentMetadata } from '@/app/hooks/useEquipmentMetadata';
-import { ChevronIcon } from '@/app/components/ui/icons';
 import type { Exercice, ExerciceCategory, ExerciceStatusFilter } from '@/app/types/exercice';
 
 const MotionDiv = dynamic(
@@ -29,7 +29,7 @@ const MotionDiv = dynamic(
 export function EquipmentsPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { preserveDate, navMenuType } = useLayoutContext();
+  const { preserveDate } = useLayoutContext();
   const { isLeftHanded } = useHandPreference();
   
   // Récupérer les équipements depuis l'URL (query param)
@@ -118,6 +118,10 @@ export function EquipmentsPageClient() {
     filteredExercices.forEach(ex => {
       grouped[ex.category].push(ex);
     });
+    // Same reading order as the zone pages: what is left to do first, done ones after.
+    (Object.keys(grouped) as ExerciceCategory[]).forEach((category) => {
+      grouped[category].sort((a, b) => Number(a.completed) - Number(b.completed));
+    });
     
     return grouped;
   }, [filteredExercices]);
@@ -137,15 +141,34 @@ export function EquipmentsPageClient() {
     setSelectedEquipments([]);
   }, []);
 
-  const statusLabel =
-    EXERCICE_STATUS_FILTER_OPTIONS.find((opt) => opt.value === filter)?.label ?? 'Tous les exercices';
 
-  const hasStatusFilter = filter !== 'all';
-  const [statusOpen, setStatusOpen] = useState(false);
+
+  // Session for the chosen equipment — computed on the same list as the session
+  // itself (includeArchived: true, persisted), independent of the status filter.
+  const { exercices: allExercices } = useExercices({ includeArchived: true });
+  const [includeNoEquipment, setIncludeNoEquipment] = useState(false);
+  const pendingAll = useMemo(
+    () => allExercices.filter((exercice) => !exercice.archived && !exercice.completed),
+    [allExercices]
+  );
+  const pendingWithEquipment = useMemo(
+    () => filterByEquipment(pendingAll, selectedEquipments, false),
+    [pendingAll, selectedEquipments]
+  );
+  const pendingNoEquipment = useMemo(
+    () => pendingAll.filter((exercice) => exercice.equipments.length === 0),
+    [pendingAll]
+  );
+  const sessionPlan = includeNoEquipment
+    ? [...pendingWithEquipment, ...pendingNoEquipment]
+    : pendingWithEquipment;
+  const sessionHref = preserveDate(
+    `/seance?equipments=${encodeURIComponent(selectedEquipments.join(','))}${includeNoEquipment ? '&sansMateriel=1' : ''}`
+  );
 
 
   return (
-    <section className="pb-40 md:pb-8 min-h-screen">
+    <section className="pb-6 md:pb-8 min-h-screen">
       <div className="max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto pt-2 md:pt-4 px-4 md:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6 md:mb-8">
@@ -170,13 +193,6 @@ export function EquipmentsPageClient() {
                 </p>
               )}
             </div>
-            {navMenuType === 'slide' && (
-              <AddButton
-                href={preserveDate('/exercice/add')}
-                label="Ajouter un exercice"
-                className="shrink-0 w-full h-10! px-3! text-sm! md:w-auto md:h-11! md:px-5! md:text-base!"
-              />
-            )}
           </div>
           
           {/* Filtres */}
@@ -225,61 +241,6 @@ export function EquipmentsPageClient() {
               )}
             </div>
 
-            {/* Filtre d'état : Tous / Non faits / Faits (section repliable, comme sur la page catégorie) */}
-            <div className="rounded-lg border border-gray-200 bg-gray-50/80">
-              <button
-                type="button"
-                onClick={() => setStatusOpen((prev) => !prev)}
-                className={clsx(
-                  'w-full flex items-center justify-between gap-3 min-h-[44px] py-3 px-4',
-                  'text-sm font-medium text-gray-800',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-400 focus-visible:ring-inset rounded-lg',
-                  'active:bg-gray-100/80 transition-colors duration-200'
-                )}
-                aria-expanded={statusOpen}
-                aria-controls="equipments-status-filters"
-                aria-label={
-                  statusOpen
-                    ? 'Masquer les filtres par état'
-                    : 'Afficher les filtres par état'
-                }
-              >
-                <span className="flex items-center gap-2">
-                  Filtrer par état
-                  {hasStatusFilter && (
-                    <span
-                      className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-gray-400 text-gray-900 text-xs font-semibold"
-                      aria-hidden
-                    >
-                      1
-                    </span>
-                  )}
-                </span>
-                <span className="text-xs font-normal text-gray-600">
-                  {statusLabel}
-                </span>
-                <ChevronIcon
-                  direction={statusOpen ? 'up' : 'down'}
-                  className={clsx(
-                    'w-5 h-5 text-gray-700 shrink-0 transition-transform duration-300 ease-out',
-                    statusOpen && 'text-gray-900'
-                  )}
-                  aria-hidden
-                />
-              </button>
-              <div
-                id="equipments-status-filters"
-                className={clsx(
-                  'overflow-hidden transition-all duration-300 ease-out',
-                  statusOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
-                )}
-                aria-hidden={!statusOpen}
-              >
-                <div className="pt-1 pb-4 px-4">
-                  <StatusFilterSection filter={filter} onFilterChange={setFilter} />
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -293,6 +254,35 @@ export function EquipmentsPageClient() {
           onRemoveEquipment={toggleEquipment}
           onResetAll={handleResetAllFilters}
         />
+
+        {/* "Je suis sur mon tapis" : faire tout ce qui se fait avec ce matériel. */}
+        {selectedEquipments.length > 0 && pendingWithEquipment.length + (includeNoEquipment ? pendingNoEquipment.length : 0) > 0 && (
+          <div className="mb-6 space-y-2">
+            <TouchLink
+              href={sessionHref}
+              className="flex items-center gap-4 rounded-2xl bg-emerald-500 px-5 py-3.5 text-emerald-950! shadow-md active:scale-[0.98] transition-transform"
+            >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/30 text-xl" aria-hidden="true">▶</span>
+              <span>
+                <span className="block text-lg font-semibold">Lancer la séance</span>
+                <span className="block text-sm text-emerald-900">
+                  {selectedEquipments.join(', ')}{includeNoEquipment && ' + sans matériel'} · {sessionPlan.length} exercice{sessionPlan.length > 1 ? 's' : ''} · environ {estimateMinutes(sessionPlan)} min
+                </span>
+              </span>
+            </TouchLink>
+            {pendingNoEquipment.length > 0 && (
+              <label className="flex items-center gap-3 min-h-[44px] px-1 text-base text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={includeNoEquipment}
+                  onChange={(e) => setIncludeNoEquipment(e.target.checked)}
+                  className="h-5 w-5 rounded accent-emerald-600"
+                />
+                Ajouter les {pendingNoEquipment.length} exercice{pendingNoEquipment.length > 1 ? 's' : ''} sans matériel
+              </label>
+            )}
+          </div>
+        )}
 
         {/* Exercices - toujours affichés, filtrés par équipements si sélectionnés */}
         <div className="">
@@ -325,7 +315,7 @@ export function EquipmentsPageClient() {
               />
             </MotionDiv>
           ) : (
-            <div className="space-y-10 md:space-y-8">
+            <div className="space-y-6">
               {CATEGORY_ORDER.map((category) => {
                 const categoryExercices = exercicesByCategory[category];
                 const categoryIcon = CATEGORY_ICONS[category];
@@ -342,32 +332,33 @@ export function EquipmentsPageClient() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <div className="mb-4 md:mb-4">
-                      <h2 className="text-lg font-semibold text-gray-800 mb-1 mt-8 flex items-center gap-2">
-                        <span>{categoryIcon}</span>
-                        <span>{CATEGORY_LABELS[category]}</span>
-                      </h2>
-                      <p className="text-sm text-gray-500">
-                        {categoryExercices.length} exercice{categoryExercices.length > 1 ? 's' : ''}
-                      </p>
-                    </div>
-                    <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
+                    <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                      <span aria-hidden="true">{categoryIcon}</span>
+                      {CATEGORY_LABELS[category]} · {categoryExercices.length}
+                    </h2>
+                    <ul className="grid gap-2 grid-cols-1 lg:grid-cols-2">
                       {categoryExercices.map((exercice) => (
-                        <div key={exercice.id} className="h-full">
-                          <ExerciceCard
+                        <li key={exercice.id}>
+                          <ExerciceRow
                             exercice={exercice}
                             onEdit={handleEditClick}
                             onCompleted={handleCompleted}
                             onArchive={handleArchive}
                           />
-                        </div>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </MotionDiv>
                 );
               })}
             </div>
           )}
+          <TouchLink
+            href={preserveDate('/exercice/add')}
+            className="mt-6 flex items-center justify-center gap-2 min-h-[48px] rounded-xl border-2 border-dashed border-gray-200 text-base font-medium text-gray-500! active:bg-gray-50"
+          >
+            + Ajouter un exercice
+          </TouchLink>
         </div>
       </div>
     </section>

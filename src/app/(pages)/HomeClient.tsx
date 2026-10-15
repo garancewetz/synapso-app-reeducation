@@ -1,23 +1,16 @@
 'use client';
 
 import { useCallback, useMemo, type ReactNode } from 'react';
-import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import { WelcomeHeaderWrapper } from '@/app/features/home';
-import { SegmentedControl } from '@/app/components/ui';
-import { UserIcon } from '@/app/components/ui/icons';
-import { BookmarkIcon } from '@/app/components/ui/icons';
-import { RocketIcon } from '@/app/components/ui/icons';
 import { useUser } from '@/app/contexts/UserContext';
-import { useLayoutContext } from '@/app/contexts/LayoutContext';
 import { useExercices, useExerciceHandlers } from '@/app/features/exercices';
 import { useProgressModal, useProgress } from '@/app/features/progress';
 import { useJournalNotes } from '@/app/features/journal';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/app/lib/api-queries';
-import { useHomeTabs, HomePinnedTab, HomeSuiviTab } from '@/app/features/home';
+import { HomePinnedTab } from '@/app/features/home';
 import { HomeExercicesView } from './HomeExercicesView';
 
 const MotionDiv = motion.div;
@@ -33,12 +26,8 @@ type HomeClientProps = {
 };
 
 export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps = {}) {
-  const searchParams = useSearchParams();
-  const tabFromUrl = searchParams.get('tab');
-  const initialTab = (tabFromUrl === 'pinned' || tabFromUrl === 'suivi' ? tabFromUrl : null) as 'pinned' | 'suivi' | null;
 
   const { effectiveUser, loading: userLoading } = useUser();
-  const { navMenuType } = useLayoutContext();
   const progressModal = useProgressModal();
   const queryClient = useQueryClient();
 
@@ -48,49 +37,15 @@ export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps
   const pinnedExercices = useMemo(() => exercices.filter(e => !e.archived && e.pinned), [exercices]);
   const pinnedProgress = useMemo(() => progressList.filter(p => p.pinned), [progressList]);
   const pinnedNotes = useMemo(() => journalNotes.filter(n => n.pinned), [journalNotes]);
-  const completedExerciceIds = useMemo(() => {
-    const ids = new Set<number>();
-    for (const ex of exercices) {
-      if (ex.completed) ids.add(ex.id);
-    }
-    return ids;
-  }, [exercices]);
-  const { activeTab, setActiveTab, tabOptionsData } = useHomeTabs(
-    pinnedExercices.length + pinnedProgress.length + pinnedNotes.length,
-    initialTab
-  );
+  const hasPinned = pinnedExercices.length + pinnedProgress.length + pinnedNotes.length > 0;
 
   const { handleEditClick: handlePinnedEdit, handleCompleted: handlePinnedUpdate } = useExerciceHandlers({
     updateExercice,
     fromPath: '/',
   });
 
-  const tabOptions = useMemo(() => {
-    const getIcon = (iconName: 'UserIcon' | 'BookmarkIcon' | 'RocketIcon') => {
-      switch (iconName) {
-        case 'UserIcon':
-          return <UserIcon className="w-5 h-5" />;
-        case 'BookmarkIcon':
-          return <BookmarkIcon className="w-5 h-5" />;
-        case 'RocketIcon':
-          return <RocketIcon className="w-5 h-5" />;
-      }
-    };
 
-    const options = navMenuType === 'slide'
-      ? tabOptionsData.filter(opt => opt.value !== 'suivi')
-      : tabOptionsData;
-    return options.map(opt => ({
-      value: opt.value,
-      label: opt.label,
-      icon: getIcon(opt.iconName),
-    }));
-  }, [tabOptionsData, navMenuType]);
 
-  const effectiveActiveTab = navMenuType === 'slide' && activeTab === 'suivi' ? 'exercices' : activeTab;
-
-  // No-op stable pour afficher le bouton Partager (la logique est dans useShareProgress du ProgressCard)
-  const handleShareProgress = useCallback(() => {}, []);
 
   const handleProgressSuccess = useCallback(() => {
     queryClient.invalidateQueries({
@@ -115,10 +70,7 @@ export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps
 
         {/* Contenu principal */}
         <div
-          className={clsx(
-            'px-3 md:px-6 lg:px-8 md:pb-8',
-            effectiveActiveTab === 'suivi' ? 'pb-40' : 'pb-12'
-          )}
+          className="px-3 md:px-6 lg:px-8 pb-12 md:pb-8"
           aria-live="polite"
           aria-busy={userLoading}
           aria-atomic="true"
@@ -155,40 +107,31 @@ export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps
                 transition={{ duration: 0.15 }}
                 className="space-y-6 md:space-y-8"
               >
-                {tabOptions.length > 0 && (
-                  <div>
-                    <SegmentedControl
-                      options={tabOptions}
-                      value={effectiveActiveTab}
-                      onChange={setActiveTab}
-                      fullWidth
-                      size="md"
-                      variant="navigation"
+                <section aria-labelledby="zones-heading">
+                  <h2 id="zones-heading" className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                    Mes zones
+                  </h2>
+                  {exercicesSlot ?? <HomeExercicesView />}
+                </section>
+
+                {/* Pinned items used to hide behind a tab: shown only when there are some. */}
+                {hasPinned && (
+                  <section aria-labelledby="pinned-heading">
+                    <h2 id="pinned-heading" className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                      Épinglés
+                    </h2>
+                    <HomePinnedTab
+                      pinnedExercices={pinnedExercices}
+                      pinnedProgress={pinnedProgress}
+                      pinnedNotes={pinnedNotes}
+                      onEdit={handlePinnedEdit}
+                      onEditProgress={progressModal.openForEdit}
+                      onCompleted={handlePinnedUpdate}
+                      onArchive={handlePinnedUpdate}
+                      onNoteUpdated={refetchNotes}
                     />
-                  </div>
+                  </section>
                 )}
-
-                {effectiveActiveTab === 'exercices' && (exercicesSlot ?? <HomeExercicesView />)}
-
-                {effectiveActiveTab === 'pinned' && (
-                  <HomePinnedTab
-                    pinnedExercices={pinnedExercices}
-                    pinnedProgress={pinnedProgress}
-                    pinnedNotes={pinnedNotes}
-                    completedExerciceIds={completedExerciceIds}
-                    onEdit={handlePinnedEdit}
-                    onEditProgress={progressModal.openForEdit}
-                    onShareProgress={handleShareProgress}
-                    onCompleted={handlePinnedUpdate}
-                    onArchive={handlePinnedUpdate}
-                    onNoteUpdated={refetchNotes}
-                  />
-                )}
-
-                {effectiveActiveTab === 'suivi' && (
-                  <HomeSuiviTab />
-                )}
-
               </MotionDiv>
             )}
           </AnimatePresence>

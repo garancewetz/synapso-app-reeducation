@@ -6,12 +6,13 @@ import { FormPageWrapper } from '@/app/components/FormPageWrapper';
 import { ExerciceCategory } from '@/app/types/exercice';
 import { CATEGORY_ORDER } from '@/app/constants/exercice.constants';
 
-function AddPageContent({ onNavigateBack, initialCategory }: { onNavigateBack: () => void; initialCategory?: ExerciceCategory }) {
+function AddPageContent({ onNavigateBack, initialCategory, duplicateFromId }: { onNavigateBack: () => void; initialCategory?: ExerciceCategory; duplicateFromId?: number }) {
   return (
     <ExerciceForm
       onSuccess={onNavigateBack}
       onCancel={onNavigateBack}
       initialCategory={initialCategory}
+      duplicateFromId={duplicateFromId}
     />
   );
 }
@@ -32,8 +33,18 @@ function AddPageContentWithParams({ onNavigateBack }: { onNavigateBack: () => vo
   };
 
   const initialCategory = getCategoryFromParam(categoryParam);
+  // ?duplicate=<id> : « Dupliquer » from an exercise's ⋯ menu
+  const duplicateParam = Number(searchParams.get('duplicate'));
+  const duplicateFromId = Number.isInteger(duplicateParam) && duplicateParam > 0 ? duplicateParam : undefined;
 
-  return <AddPageContent onNavigateBack={onNavigateBack} initialCategory={initialCategory} />;
+  return (
+    <AddPageContent
+      key={duplicateFromId ?? 'new'}
+      onNavigateBack={onNavigateBack}
+      initialCategory={initialCategory}
+      duplicateFromId={duplicateFromId}
+    />
+  );
 }
 
 function AddPageWrapperWithParams() {

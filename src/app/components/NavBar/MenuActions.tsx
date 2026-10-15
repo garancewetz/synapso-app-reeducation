@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { MenuLink } from '@/app/components';
+import { MenuRow } from './MenuRow';
 import { PlusIcon, SparklesIcon } from '@/app/components/ui/icons';
 import { MENU_COLORS } from '@/app/constants/card.constants';
 import { PROGRESS_ADD_HREF } from '@/app/constants/progress.constants';
@@ -47,26 +47,22 @@ export function MenuActions({ onMenuClose, isMenuOpen }: Props) {
 
   return (
     <>
-      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-1 mt-2">
-        Actions rapides
+      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 px-1 mt-4">
+        Ajouter
       </h3>
-      {menuActions.map((action) => {
-        const href = action.href(pathname);
-
-        return (
-          <MenuLink
+      <div className="grid gap-0.5">
+        {menuActions.map((action) => (
+          <MenuRow
             key={action.title}
-            href={href}
-            onClick={onMenuClose}
+            href={action.href(pathname)}
+            label={action.title}
             icon={action.icon}
-            title={action.title}
-            description={action.description}
-            iconBgColor={action.iconBgColor}
-            iconTextColor={action.iconTextColor}
+            iconClassName={`${action.iconBgColor} ${action.iconTextColor}`}
+            onClick={onMenuClose}
             tabIndex={tabIndex}
           />
-        );
-      })}
+        ))}
+      </div>
     </>
   );
 }

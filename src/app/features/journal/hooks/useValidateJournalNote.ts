@@ -74,7 +74,6 @@ export function useValidateJournalNote({
             await queryClient.invalidateQueries({ queryKey: queryKeys.exercices.all });
             await queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
             await queryClient.invalidateQueries({ queryKey: queryKeys.categoryStats.all });
-            await queryClient.invalidateQueries({ queryKey: queryKeys.todayCompletedCount.all });
           }
 
           onCompleted?.(updatedNote);

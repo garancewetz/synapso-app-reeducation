@@ -2,9 +2,6 @@
 // CONSTANTES POUR LA PAGE HISTORIQUE
 // ============================================================================
 
-// Objectif quotidien d'exercices
-export const DAILY_GOAL = 5;
-
 // Options de filtre de période
 export type PeriodFilter = 'week' | 'month' | 'total';
 

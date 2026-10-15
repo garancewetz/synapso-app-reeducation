@@ -1,9 +1,7 @@
-export { useHomeTabs } from './hooks/useHomeTabs';
 export { HomeExercicesTab } from './components/HomeExercicesTab';
 export { HomeJournalTab } from './components/HomeJournalTab';
 export { HomePinnedTab } from './components/HomePinnedTab';
 export { HomeProgressionTab } from './components/HomeProgressionTab';
-export { HomeSuiviTab } from './components/HomeSuiviTab';
 export { WelcomeHeader } from './components/WelcomeHeader';
 export { WelcomeHeaderWrapper } from './components/WelcomeHeaderWrapper';
 export { WelcomeHeaderGreeting } from './components/WelcomeHeaderGreeting';

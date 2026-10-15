@@ -39,18 +39,26 @@ export function CompleteButton({
       return isCompleted ? 'Fait' : 'Marquer comme fait';
     }
     
-    // En mode sablier, afficher "Fait le [date]" si fait, sinon "Fait le [date]" (le style indique l'état)
+    // Le libellé dit l'état réel : une action tant que ce n'est pas fait,
+    // un constat ensuite ("Fait aujourd'hui" sur un exercice non fait prêtait à confusion).
     if (isTimeMachineMode && targetDateFormatted) {
-      return `Fait le ${targetDateFormatted}`;
+      return isCompletedToday ? `Fait le ${targetDateFormatted}` : `Marquer fait le ${targetDateFormatted}`;
     }
-    
-    // Afficher le compteur hebdomadaire si fait plusieurs fois cette semaine
+
     if (weeklyCount > 1) {
-      return `Fait (${weeklyCount}× cette semaine)`;
+      return `Fait ${weeklyCount}× cette semaine`;
     }
-    
-    // Sinon, toujours "Fait aujourd'hui" (le style indique si c'est fait aujourd'hui ou non)
-    return 'Fait aujourd\'hui';
+
+    if (isCompletedToday) {
+      return 'Fait aujourd\'hui';
+    }
+
+    // Rythme hebdomadaire : déjà fait un autre jour de la semaine
+    if (isCompleted) {
+      return 'Fait cette semaine';
+    }
+
+    return 'Marquer comme fait';
   };
 
   const getTitle = () => {

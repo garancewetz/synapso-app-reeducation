@@ -11,39 +11,29 @@ type UseSpeechRecognitionReturn = {
   isSupported: boolean;
   /** Texte en cours de reconnaissance (temps réel) */
   interimTranscript: string;
+  /** Message à afficher quand la dictée échoue (micro refusé, rien entendu…) */
+  error: string | null;
   startListening: () => void;
   stopListening: () => void;
   toggleListening: () => void;
 };
 
-/**
- * Détecte la locale du navigateur pour la reconnaissance vocale
- * Retourne 'fr-FR' par défaut si non détectée
- */
-function getBrowserLocale(): string {
-  if (typeof window === 'undefined') {
-    return 'fr-FR';
+/** Plain French messages for the errors a user can act on; null = stay silent. */
+function getErrorMessage(error: string): string | null {
+  switch (error) {
+    case 'not-allowed':
+      return 'Le micro n’est pas autorisé. Autorise-le pour ce site dans les réglages du navigateur.';
+    case 'service-not-allowed':
+      return 'La dictée est désactivée sur cet appareil (Réglages › Général › Clavier › Dictée).';
+    case 'no-speech':
+      return 'Je n’ai rien entendu. Réessaie en parlant près du téléphone.';
+    case 'audio-capture':
+      return 'Aucun micro détecté.';
+    case 'network':
+      return 'La dictée a besoin d’une connexion internet.';
+    default:
+      return null; // 'aborted' (stop button) and others: nothing to report
   }
-  
-  // Utiliser navigator.languages (première préférence) ou navigator.language
-  const browserLang = navigator.languages?.[0] || navigator.language || 'fr-FR';
-  
-  // Si la locale est déjà au format complet (ex: 'fr-FR'), la retourner telle quelle
-  if (browserLang.includes('-')) {
-    return browserLang;
-  }
-  
-  // Sinon, essayer de trouver une correspondance (ex: 'fr' -> 'fr-FR')
-  const langCode = browserLang.split('-')[0].toLowerCase();
-  
-  // Pour le français, retourner 'fr-FR'
-  if (langCode === 'fr') {
-    return 'fr-FR';
-  }
-  
-  // Pour d'autres langues, retourner la locale du navigateur avec une variante par défaut
-  // (ex: 'en' -> 'en-US', 'es' -> 'es-ES')
-  return `${langCode}-${langCode.toUpperCase()}`;
 }
 
 /**
@@ -56,12 +46,21 @@ export function useSpeechRecognition({
   onError,
   lang,
 }: UseSpeechRecognitionOptions = {}): UseSpeechRecognitionReturn {
-  // Utiliser la langue fournie, sinon détecter automatiquement la locale du navigateur
-  const detectedLang = lang || getBrowserLocale();
+  // The app is French-only: dictate in French even on a phone set to another
+  // language (an English iPhone transcribed « pont fessier » as English words).
+  const detectedLang = lang || 'fr-FR';
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // Latest callbacks: the recognition keeps the handlers it was started with.
+  const onResultRef = useRef(onResult);
+  const onErrorRef = useRef(onError);
+  onResultRef.current = onResult;
+  onErrorRef.current = onError;
+  // Results already delivered in this session (Safari re-sends earlier finals).
+  const finalizedCountRef = useRef(0);
 
   // Vérifier le support au montage
   useEffect(() => {
@@ -86,44 +85,44 @@ export function useSpeechRecognition({
     recognition.continuous = true;      // Continuer d'écouter
     recognition.interimResults = true;  // Résultats en temps réel
 
+    finalizedCountRef.current = 0;
     recognition.onstart = () => {
       setIsListening(true);
       setInterimTranscript('');
+      setError(null);
     };
-    
+
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interim = '';
       let final = '';
 
-      // Parcourir tous les résultats
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      // Walk every result but deliver each final one only once: Safari keeps
+      // resultIndex at 0 and re-sends earlier finals, which duplicated words.
+      for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i];
         const transcript = result[0].transcript;
-
         if (result.isFinal) {
-          // Résultat final - envoyer au callback
-          final += transcript;
-        } else {
-          // Résultat intermédiaire - afficher en temps réel
+          if (i >= finalizedCountRef.current) {
+            final += transcript;
+            finalizedCountRef.current = i + 1;
+          }
+        } else if (i >= finalizedCountRef.current) {
           interim += transcript;
         }
       }
 
-      // Mettre à jour le texte intermédiaire
-      setInterimTranscript(interim);
-
-      // Envoyer les résultats finaux
-      if (final && onResult) {
-        onResult(final);
-      }
+      setInterimTranscript(interim.trim());
+      const text = final.replace(/\s+/g, ' ').trim();
+      if (text) onResultRef.current?.(text);
     };
-    
+
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error('Speech recognition error:', event.error);
       setIsListening(false);
       setInterimTranscript('');
-      if (event.error === 'not-allowed') {
-        onError?.('Autorise le micro pour utiliser la dictée vocale');
+      const message = getErrorMessage(event.error);
+      if (message) {
+        setError(message);
+        onErrorRef.current?.(message);
       }
     };
     
@@ -133,8 +132,12 @@ export function useSpeechRecognition({
     };
 
     recognitionRef.current = recognition;
-    recognition.start();
-  }, [detectedLang, onResult, onError]);
+    try {
+      recognition.start();
+    } catch {
+      setError(getErrorMessage('not-allowed'));
+    }
+  }, [detectedLang]);
 
   const toggleListening = useCallback(() => {
     if (isListening) {
@@ -157,6 +160,7 @@ export function useSpeechRecognition({
     isListening,
     isSupported,
     interimTranscript,
+    error,
     startListening,
     stopListening,
     toggleListening,

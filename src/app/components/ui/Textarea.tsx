@@ -3,7 +3,7 @@
 import { useRef, useEffect } from 'react';
 import type { TextareaHTMLAttributes } from 'react';
 import clsx from 'clsx';
-import { useSpeechRecognition } from '@/app/hooks/useSpeechRecognition';
+import { useSpeechField } from '@/app/hooks/useSpeechField';
 import { SpeechButton } from './SpeechButton';
 
 type BaseProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
@@ -37,16 +37,8 @@ function SpeechTextarea({
   ...props
 }: Omit<WithSpeechProps, 'speech'>) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { isListening, isSupported, interimTranscript, toggleListening } = useSpeechRecognition({
-    onResult: (transcript) => {
-      onValueChange(value ? `${value} ${transcript}` : transcript);
-    },
-    onError: onSpeechError,
-  });
-
-  const displayValue = isListening && interimTranscript
-    ? (value ? `${value} ${interimTranscript}` : interimTranscript)
-    : value;
+  const { isListening, isSupported, error: speechError, toggleListening, displayValue } =
+    useSpeechField(value, onValueChange, onSpeechError);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -83,7 +75,12 @@ function SpeechTextarea({
       </div>
       {isListening && (
         <p className="text-xs text-red-500 font-medium mt-1 text-center">
-          🔴 Écoute en cours...{interimTranscript && ` "${interimTranscript}"`}
+          🔴 Je t’écoute… appuie sur ⏹️ quand tu as fini
+        </p>
+      )}
+      {!isListening && speechError && (
+        <p role="alert" className="text-sm text-red-600 mt-1">
+          {speechError}
         </p>
       )}
     </div>

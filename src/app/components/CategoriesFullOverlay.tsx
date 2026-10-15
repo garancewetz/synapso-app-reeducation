@@ -1,27 +1,17 @@
 'use client';
 
 import { useMemo } from 'react';
-import { CategoryCardWithProgress } from '@/app/features/exercices';
-import { useExercices, useRelatedStretchingByCategory } from '@/app/features/exercices';
-import { CATEGORY_ORDER } from '@/app/constants/exercice.constants';
-import type { ExerciceCategory } from '@/app/types/exercice';
+import { useExercices } from '@/app/features/exercices';
+import { HomeCategoryList } from '@/app/features/home/components/HomeCategoryList';
 import { useLayoutContext } from '@/app/contexts/LayoutContext';
 import { Button } from '@/app/components/ui/Button';
 import { CloseIcon } from '@/app/components/ui/icons';
 
 export function CategoriesFullOverlay() {
   const { categoriesOverlayOpen, setCategoriesOverlayOpen } = useLayoutContext();
-  const { exercices } = useExercices({ includeArchived: false });
-  const { relatedStretchingByCategory } = useRelatedStretchingByCategory();
-
-  const exercicesByCategory = useMemo(() => {
-    const active = exercices.filter((e) => !e.archived);
-    const map = new Map<ExerciceCategory, number>();
-    CATEGORY_ORDER.forEach((category) => {
-      map.set(category, active.filter((e) => e.category === category).length);
-    });
-    return map;
-  }, [exercices]);
+  // Same list and counters as the home (includeArchived: true, persisted).
+  const { exercices, loading } = useExercices({ includeArchived: true });
+  const activeExercices = useMemo(() => exercices.filter((e) => !e.archived), [exercices]);
 
   if (!categoriesOverlayOpen) return null;
 
@@ -45,16 +35,14 @@ export function CategoriesFullOverlay() {
         </Button>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="max-w-2xl mx-auto space-y-4">
-          {CATEGORY_ORDER.map((category) => (
-            <div key={category} className="min-h-[88px]">
-              <CategoryCardWithProgress
-                category={category}
-                total={exercicesByCategory.get(category) ?? 0}
-                relatedStretchingCount={relatedStretchingByCategory[category] ?? 0}
-              />
-            </div>
-          ))}
+        {/* Close as soon as a zone is picked (the overlay lives above the pages). */}
+        <div
+          className="max-w-2xl mx-auto"
+          onClickCapture={(e) => {
+            if ((e.target as HTMLElement).closest('a')) setCategoriesOverlayOpen(false);
+          }}
+        >
+          <HomeCategoryList exercices={activeExercices} loading={loading} />
         </div>
       </div>
     </div>

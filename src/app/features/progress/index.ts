@@ -1,6 +1,5 @@
 // Components
 export { ProgressBottomSheet } from './components/ProgressBottomSheet';
-export { ProgressFAB } from './components/ProgressFAB';
 export { ProgressMedia } from './components/ProgressMedia';
 
 
@@ -8,7 +7,6 @@ export { ProgressMedia } from './components/ProgressMedia';
 export { useProgress, triggerProgressRefresh } from './hooks/useProgress';
 export { useProgressInfinite } from './hooks/useProgressInfinite';
 export { useProgressModal } from './hooks/useProgressModal';
-export { useProgressStats } from './hooks/useProgressStats';
 export { useShareProgress } from './hooks/useShareProgress';
 export { usePinProgress } from './hooks/usePinProgress';
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import type { PeriodProgress } from '@/app/features/exercices/hooks/usePeriodProgress';
 
-const DAILY_GOAL = 5;
 const CELEBRATION_DURATION_MS = 4800;
 
 type UseCelebrationReturn = {
@@ -9,13 +9,14 @@ type UseCelebrationReturn = {
 };
 
 /**
- * Hook pour gérer l'animation de célébration quand l'objectif quotidien est atteint
- * Déclenche les confettis uniquement quand on passe de moins de 5 à exactement 5
+ * Celebration when the last exercise of the period (day or week) gets done:
+ * fires only on the transition "not all done" → "all done", never at load.
  */
-export function useCelebration(completedToday: number | null): UseCelebrationReturn {
+export function useCelebration(progress: PeriodProgress | null): UseCelebrationReturn {
   const [showCelebration, setShowCelebration] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
-  const prevCompletedRef = useRef(completedToday);
+  const isComplete = progress !== null && progress.total > 0 && progress.done >= progress.total;
+  const prevCompleteRef = useRef<boolean | null>(progress === null ? null : isComplete);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Cleanup uniquement au unmount
@@ -26,19 +27,13 @@ export function useCelebration(completedToday: number | null): UseCelebrationRet
   }, []);
 
   useEffect(() => {
-    const prevCompleted = prevCompletedRef.current;
-
     // Ignorer le chargement initial
-    if (completedToday === null) return;
+    if (progress === null) return;
 
-    // Mettre à jour la ref avant toute logique
-    prevCompletedRef.current = completedToday;
+    const wasComplete = prevCompleteRef.current;
+    prevCompleteRef.current = isComplete;
 
-    // Déclencher quand on passe de moins de 5 à exactement 5
-    const wasBelowGoal = prevCompleted !== null && prevCompleted < DAILY_GOAL;
-    const isExactlyGoal = completedToday === DAILY_GOAL;
-
-    if (wasBelowGoal && isExactlyGoal) {
+    if (wasComplete === false && isComplete) {
       // Annuler le timer précédent si re-trigger pendant l'animation
       if (timerRef.current) clearTimeout(timerRef.current);
 
@@ -50,8 +45,7 @@ export function useCelebration(completedToday: number | null): UseCelebrationRet
         timerRef.current = null;
       }, CELEBRATION_DURATION_MS);
     }
-  }, [completedToday]);
+  }, [progress, isComplete]);
 
   return { showCelebration, animationKey };
 }
-

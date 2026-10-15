@@ -25,11 +25,11 @@ export class TimeMachineHelper {
    */
   async clickDayInHeatmap(daysAgo: number): Promise<void> {
     const targetDate = subDays(new Date(), daysAgo);
-    const dateLabel = format(targetDate, 'd MMMM', { locale: fr });
-    const container = this.page.locator(`[title*="${dateLabel}"]`).first();
-    await container.waitFor({ state: 'visible', timeout: 10000 });
-    const clickableCell = container.locator('> div.aspect-square').first();
-    await clickableCell.click();
+    // Activity rounds are labelled "mercredi 14 octobre : 2 exercices"
+    const dateLabel = format(targetDate, 'EEEE d MMMM', { locale: fr });
+    const round = this.page.getByRole('button', { name: new RegExp(`^${dateLabel} :`) }).first();
+    await round.waitFor({ state: 'visible', timeout: 10000 });
+    await round.click();
   }
 
   /**

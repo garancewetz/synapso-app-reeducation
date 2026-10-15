@@ -8,6 +8,7 @@ import {
   AVAILABLE_BODYPARTS,
 } from '@/app/constants/exercice.constants';
 import { getEquipmentIcon } from '@/app/constants/equipment.constants';
+import { getRelatedStretching } from '../utils/stretching.utils';
 
 type BodypartWithCount = { value: string; label: string; icon: string; count: number };
 type EquipmentWithCount = { value: string; label: string; icon: string; count: number };
@@ -116,17 +117,7 @@ export function useCategoryFilters({
   }, [baseFilteredExercices, selectedBodyparts, selectedEquipments]);
 
   const relatedStretchingExercices = useMemo(() => {
-    if (categoryParam === 'STRETCHING' || !stretchingExercices.length) {
-      return [];
-    }
-    const categoryBodyparts = AVAILABLE_BODYPARTS.filter(
-      bp => BODYPART_TO_CATEGORY[bp] === categoryParam
-    );
-    let filtered = stretchingExercices.filter(ex =>
-      ex.bodyparts.some(bp =>
-        categoryBodyparts.includes(bp as (typeof AVAILABLE_BODYPARTS)[number])
-      )
-    );
+    let filtered = getRelatedStretching(stretchingExercices, categoryParam);
     if (filter === 'notCompleted') {
       filtered = filtered.filter(e => !e.completed);
     } else if (filter === 'completed') {

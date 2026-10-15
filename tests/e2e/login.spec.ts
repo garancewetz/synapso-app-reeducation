@@ -8,8 +8,8 @@ test.describe('Connexion', () => {
 
     await authHelper.login(TEST_USER.username, TEST_USER.password);
 
-    await expect(page).toHaveURL(/^http:\/\/localhost:3003\/?/);
-    await expect(page.getByText(/Corps|Journal|Parcours/).first()).toBeVisible({
+    await expect.poll(() => new URL(page.url()).pathname).toBe('/');
+    await expect(page.getByText(/Mes zones|Haut du corps|Commencer ma séance/).first()).toBeVisible({
       timeout: 10000,
     });
   });
@@ -27,6 +27,6 @@ test.describe('Connexion', () => {
     await expect(page.locator('form').getByRole('button', { name: 'Se connecter' })).toBeVisible({
       timeout: 10000,
     });
-    await expect(page).toHaveURL(/^http:\/\/localhost:3003\/?/);
+    await expect.poll(() => new URL(page.url()).pathname).toBe('/');
   });
 });

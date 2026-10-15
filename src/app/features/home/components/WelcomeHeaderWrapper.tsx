@@ -3,13 +3,11 @@
 import { memo } from 'react';
 import { usePathname } from 'next/navigation';
 import { useMemo, useCallback } from 'react';
-import { getDateKey } from '@/app/utils/date.utils';
 import { useQuery } from '@tanstack/react-query';
 import { WelcomeHeader } from './WelcomeHeader';
 import { useUser } from '@/app/contexts/UserContext';
 import { useDayDetailModal } from '@/app/contexts/DayDetailModalContext';
-import { useTodayCompletedCount } from '@/app/features/exercices';
-import { useProgress } from '@/app/features/progress';
+import { usePeriodProgress } from '@/app/features/exercices';
 import {
   getCurrentWeekData,
   getLast7DaysData,
@@ -36,11 +34,10 @@ export const WelcomeHeaderWrapper = memo(function WelcomeHeaderWrapper({ initial
   const pathname = usePathname();
   const { effectiveUser, loading } = useUser();
   const { openDayDetail } = useDayDetailModal();
-  const completedToday = useTodayCompletedCount();
+  const periodProgress = usePeriodProgress();
   const { selectedDate, isTimeMachineMode, referenceDateKey, referenceDate } = useTimeContext();
   const displayName = effectiveUser?.name || "";
   const resetFrequency = effectiveUser?.resetFrequency || null;
-  const { progressList } = useProgress();
 
   const referenceDateForQuery = isTimeMachineMode && referenceDateKey ? referenceDateKey : undefined;
 
@@ -89,13 +86,6 @@ export const WelcomeHeaderWrapper = memo(function WelcomeHeaderWrapper({ initial
     [heatmapData, referenceDate]
   );
 
-  const progressDates = useMemo(() => {
-    return new Set(
-      progressList
-        .map(p => getDateKey(new Date(p.createdAt)))
-        .filter((k): k is string => k != null)
-    );
-  }, [progressList]);
 
   const handleDayClick = useCallback((day: HeatmapDay) => {
     openDayDetail(day);
@@ -117,10 +107,9 @@ export const WelcomeHeaderWrapper = memo(function WelcomeHeaderWrapper({ initial
     )}>
       <WelcomeHeader
         userName={displayName}
-        completedToday={completedToday}
+        periodProgress={periodProgress}
         resetFrequency={resetFrequency}
         weekData={weekData}
-        progressDates={progressDates}
         onDayClick={handleDayClick}
         currentStreak={currentStreak}
       />
