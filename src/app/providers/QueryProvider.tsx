@@ -47,6 +47,12 @@ export function QueryProvider({ children }: PropsWithChildren) {
   return (
     <PersistQueryClientProvider
       client={queryClient}
+      // The snapshot paints instantly but may predate the last mutation (it is
+      // written ~1s after a change): mark everything stale once restored, so every
+      // mounted query revalidates instead of trusting a "fresh" 20s-old copy —
+      // otherwise a ticked exercise could show unticked after a quick relaunch,
+      // and re-ticking it would toggle it off server-side.
+      onSuccess={() => queryClient.invalidateQueries()}
       persistOptions={{
         persister,
         // Health data — kept 7 days max, revalidated at mount anyway.

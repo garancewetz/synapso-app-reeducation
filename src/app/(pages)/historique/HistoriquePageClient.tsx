@@ -31,7 +31,6 @@ const ConfettiRain = dynamic(
 
 import { BackButton } from '@/app/components/ui/BackButton';
 import { SegmentedControl, Loader, ProgressButton } from '@/app/components/ui';
-import { useLayoutContext } from '@/app/contexts/LayoutContext';
 import type { HeatmapDay } from '@/app/features/historique';
 import { NAVIGATION_EMOJIS, PROGRESS_EMOJIS } from '@/app/constants/emoji.constants';
 import { PROGRESS_ADD_ACTION } from '@/app/constants/progress.constants';
@@ -89,7 +88,6 @@ export function HistoriquePageClient({ embeddedInHome = false }: Props) {
   const queryClient = useQueryClient();
 
   const { selectedDateKey, isTimeMachineMode, referenceDate } = useTimeContext();
-  const { navMenuType } = useLayoutContext();
 
   // ⚡ PERFORMANCE: Utiliser useDeferredValue pour les calculs non critiques
   // Cela permet de rendre l'UI immédiatement et de différer les calculs lourds
@@ -304,14 +302,12 @@ export function HistoriquePageClient({ embeddedInHome = false }: Props) {
                 Statistiques et progrès de ta progression de rééducation
               </p>
             </div>
-            {navMenuType === 'slide' && (
-              <ProgressButton
+                        <ProgressButton
                 variant="inline"
                 onClick={() => progressModal.openForCreate()}
                 label="Ajouter un progrès"
                 className="shrink-0 w-full h-10! px-3! text-sm! md:w-auto md:h-11! md:px-5! md:text-base!"
               />
-            )}
           </div>
         </div>
 

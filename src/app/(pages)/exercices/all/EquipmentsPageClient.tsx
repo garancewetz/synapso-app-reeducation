@@ -31,7 +31,7 @@ const MotionDiv = dynamic(
 export function EquipmentsPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { preserveDate, navMenuType } = useLayoutContext();
+  const { preserveDate } = useLayoutContext();
   const { isLeftHanded } = useHandPreference();
   
   // Récupérer les équipements depuis l'URL (query param)
@@ -195,13 +195,11 @@ export function EquipmentsPageClient() {
                 </p>
               )}
             </div>
-            {navMenuType === 'slide' && (
-              <AddButton
+                        <AddButton
                 href={preserveDate('/exercice/add')}
                 label="Ajouter un exercice"
                 className="shrink-0 w-full h-10! px-3! text-sm! md:w-auto md:h-11! md:px-5! md:text-base!"
               />
-            )}
           </div>
           
           {/* Filtres */}

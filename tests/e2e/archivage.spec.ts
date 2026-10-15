@@ -12,14 +12,14 @@ test.describe('Archivage', () => {
     await page.goto('/exercices/upper_body');
     await page.waitForLoadState('networkidle');
 
-    const firstCard = page.locator('.exercise-card').first();
+    const firstCard = page.locator('.exercise-row').first();
     await firstCard.waitFor({ state: 'visible', timeout: 15000 });
-    const exerciceName = await firstCard.locator('h3').first().textContent();
+    const exerciceName = await firstCard.locator('.exercise-row-name').first().textContent();
     if (!exerciceName?.trim()) {
       throw new Error('Aucun exercice trouvé sur la page');
     }
 
-    await firstCard.getByRole('button', { name: 'Ouvrir les actions' }).click();
+    await firstCard.getByRole('button', { name: /^Actions pour / }).click();
     await page.waitForTimeout(500);
 
     const archiveButton = firstCard.getByRole('button', { name: 'Archiver' });

@@ -132,8 +132,7 @@ export function NavBar() {
               aria-label="Retour à l'accueil Synapso"
             >
               <Logo size={36} />
-              <span className="hidden md:inline text-base text-gray-800 font-medium">Synapso</span>
-              <span className="text-xl" aria-hidden="true">🏠</span>
+              <span className="text-base text-gray-800 font-semibold">Synapso</span>
             </TouchLink>
           </div>
 

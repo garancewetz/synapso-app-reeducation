@@ -31,7 +31,7 @@ test.describe('Mode Sablier (Time Machine)', () => {
     // Vérifier qu'on est bien connecté
     // Vérifier que l'URL est bien la page d'accueil
     const url = page.url();
-    expect(url).toMatch(/^http:\/\/localhost:3003\/?/);
+    expect(new URL(url).pathname).toBe('/');
     
     // Vérifier la présence d'éléments du dashboard (plus flexible)
     const hasDashboard = await Promise.race([
@@ -159,10 +159,11 @@ test.describe('Mode Sablier (Time Machine)', () => {
     await page.waitForTimeout(2000);
     
     if (await timeMachineHelper.isTimeMachineModeActive()) {
-      const goalLabel = page.getByText(/Objectif du/).first();
+      // Progress label of the "Aujourd'hui" card becomes the date ("Mercredi 14 octobre") in time machine mode
+      const goalLabel = page.getByText(/^(Lundi|Mardi|Mercredi|Jeudi|Vendredi|Samedi|Dimanche) \d+ \p{L}+$/u).first();
       await expect(goalLabel).toBeVisible({ timeout: 5000 });
       const updatedText = await goalLabel.textContent();
-      expect(updatedText ?? '').toContain('Objectif');
+      expect(updatedText ?? '').toMatch(/\d+/);
     }
   });
 
@@ -190,7 +191,7 @@ test.describe('Mode Sablier (Time Machine)', () => {
     await page.waitForTimeout(2000);
     
     if (await timeMachineHelper.isTimeMachineModeActive()) {
-      const cards = page.locator('.exercise-card');
+      const cards = page.locator('.exercise-row');
       await expect(cards.first()).toBeVisible({ timeout: 10000 });
       expect(await cards.count()).toBeGreaterThan(0);
     }

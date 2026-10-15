@@ -12,9 +12,9 @@ test.describe('Partage', () => {
     await page.goto('/exercices/upper_body');
     await page.waitForLoadState('networkidle');
 
-    const firstCard = page.locator('.exercise-card').first();
+    const firstCard = page.locator('.exercise-row').first();
     await firstCard.waitFor({ state: 'visible', timeout: 15000 });
-    await firstCard.getByRole('button', { name: 'Ouvrir les actions' }).click();
+    await firstCard.getByRole('button', { name: /^Actions pour / }).click();
     const partagerButton = firstCard.getByRole('button', { name: 'Partager' });
     await partagerButton.waitFor({ state: 'visible', timeout: 5000 });
     // dispatchEvent car le bouton est couvert par d'autres éléments de la page
@@ -32,9 +32,9 @@ test.describe('Partage', () => {
     await page.goto('/exercices/upper_body');
     await page.waitForLoadState('networkidle');
 
-    const firstCard = page.locator('.exercise-card').first();
+    const firstCard = page.locator('.exercise-row').first();
     await firstCard.waitFor({ state: 'visible', timeout: 15000 });
-    await firstCard.getByRole('button', { name: 'Ouvrir les actions' }).click();
+    await firstCard.getByRole('button', { name: /^Actions pour / }).click();
     const partagerButton = firstCard.getByRole('button', { name: 'Partager' });
     await partagerButton.waitFor({ state: 'visible', timeout: 5000 });
     await partagerButton.dispatchEvent('click');

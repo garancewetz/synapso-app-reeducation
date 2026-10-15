@@ -64,7 +64,7 @@ export const ExerciceRow = memo(function ExerciceRow({ exercice, onEdit, onCompl
     <div
       ref={rowRef}
       className={clsx(
-        'relative rounded-xl border border-gray-200 overflow-hidden',
+        'exercise-row relative rounded-xl border border-gray-200 overflow-hidden',
         isDone ? 'bg-gray-50' : 'bg-white'
       )}
     >
@@ -79,7 +79,7 @@ export const ExerciceRow = memo(function ExerciceRow({ exercice, onEdit, onCompl
         >
           <span className={clsx('flex items-center gap-1.5 text-base font-semibold leading-snug', isDone ? 'text-gray-400' : 'text-gray-800')}>
             {exercice.pinned && <BookmarkIcon className="w-3.5 h-3.5 shrink-0 text-amber-500" filled />}
-            <span className="truncate">{exercice.name}</span>
+            <span className="exercise-row-name truncate">{exercice.name}</span>
           </span>
           {summary && (
             <span className={clsx('block text-sm', isDone ? 'text-gray-400' : 'text-gray-600')}>{summary}</span>

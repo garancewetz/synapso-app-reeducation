@@ -41,10 +41,10 @@ test.describe('Exercices', () => {
     await page.goto('/exercices/upper_body');
     await page.waitForLoadState('networkidle');
 
-    const firstCard = page.locator('.exercise-card').first();
+    const firstCard = page.locator('.exercise-row').first();
     await firstCard.waitFor({ state: 'visible', timeout: 15000 });
     await firstCard.scrollIntoViewIfNeeded();
-    await firstCard.getByRole('button', { name: 'Ouvrir les actions' }).click();
+    await firstCard.getByRole('button', { name: /^Actions pour / }).click();
     const modifierButton = firstCard.getByRole('button', { name: 'Modifier' });
     await modifierButton.waitFor({ state: 'visible', timeout: 5000 });
 
@@ -94,9 +94,9 @@ test.describe('Exercices', () => {
     await expect(page.getByText(newName).first()).toBeVisible({ timeout: 10000 });
 
     // Vérification : rouvrir l'exercice et vérifier les champs
-    const cardWithNewName = page.locator('.exercise-card').filter({ hasText: newName }).first();
+    const cardWithNewName = page.locator('.exercise-row').filter({ hasText: newName }).first();
     await cardWithNewName.scrollIntoViewIfNeeded();
-    await cardWithNewName.getByRole('button', { name: 'Ouvrir les actions' }).click();
+    await cardWithNewName.getByRole('button', { name: /^Actions pour / }).click();
     const modifierBtn2 = cardWithNewName.getByRole('button', { name: 'Modifier' });
     await modifierBtn2.waitFor({ state: 'visible', timeout: 5000 });
 
@@ -130,13 +130,12 @@ test.describe('Exercices', () => {
     await page.goto('/exercices/upper_body');
     await page.waitForLoadState('networkidle');
 
-    const firstCard = page.locator('.exercise-card').first();
+    const firstCard = page.locator('.exercise-row').first();
     await firstCard.waitFor({ state: 'visible', timeout: 15000 });
     await firstCard.scrollIntoViewIfNeeded();
 
-    const completeButton = firstCard.getByRole('button', {
-      name: /Marquer comme fait aujourd'hui|Fait aujourd'hui|Démarquer|Fait \(\d+× cette semaine\)|Marquer comme fait le|Démarquer pour le/,
-    }).first();
+    // Compact row: round check button labelled "Marquer <nom> comme fait" / "Démarquer <nom>"
+    const completeButton = firstCard.getByRole('button', { name: /^Marquer .+ comme fait$|^Démarquer / }).first();
     await completeButton.waitFor({ state: 'visible', timeout: 10000 });
 
     const completeResponse = page.waitForResponse(
@@ -151,7 +150,7 @@ test.describe('Exercices', () => {
 
     await expect(completeButton).toHaveAttribute(
       'aria-label',
-      /Démarquer|Marquer comme fait aujourd'hui/,
+      /^Démarquer |^Marquer .+ comme fait$/,
       { timeout: 10000 }
     );
   });
@@ -171,9 +170,9 @@ test.describe('Exercices', () => {
     await expect(page.getByText(nameToDelete).first()).toBeVisible({ timeout: 10000 });
 
     // Ouvrir la page d'édition
-    const cardToDelete = page.locator('.exercise-card').filter({ hasText: nameToDelete }).first();
+    const cardToDelete = page.locator('.exercise-row').filter({ hasText: nameToDelete }).first();
     await cardToDelete.scrollIntoViewIfNeeded();
-    await cardToDelete.getByRole('button', { name: 'Ouvrir les actions' }).click();
+    await cardToDelete.getByRole('button', { name: /^Actions pour / }).click();
     const modifierBtn = cardToDelete.getByRole('button', { name: 'Modifier' });
     await modifierBtn.waitFor({ state: 'visible', timeout: 5000 });
 

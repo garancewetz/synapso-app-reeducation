@@ -7,7 +7,6 @@ import { SelectedDateBanner, TimeMachineWrapper } from '@/app/features/time-mach
 import { usePreserveDateParam } from '@/app/features/time-machine';
 import { usePendingShareCount } from '@/app/features/sharing';
 import { NotificationBadge } from '@/app/features/sharing';
-import { useExercices } from '@/app/features/exercices/hooks/useExercices';
 import { LayoutProvider } from '@/app/contexts/LayoutContext';
 import { NavBar } from '@/app/components/NavBar';
 import { BottomNavBar } from '@/app/components/BottomNavBar';
@@ -18,7 +17,6 @@ import {
   NAV_MENU_TYPE_STORAGE_KEY,
   type NavMenuType,
 } from '@/app/constants/settings.constants';
-import type { ExerciceCategory } from '@/app/types/exercice';
 import clsx from 'clsx';
 import { ErrorBoundary } from '@/app/components/ui/ErrorBoundary';
 
@@ -62,7 +60,6 @@ function readNavMenuType(): NavMenuType {
 export function LayoutComposer({ children }: PropsWithChildren) {
   const preserveDate = usePreserveDateParam();
   const { count: pendingShareCount } = usePendingShareCount();
-  const { exercices } = useExercices({ includeArchived: false });
   const [navMenuType, setNavMenuTypeState] = useState<NavMenuType>('category');
   const [categoriesOverlayOpen, setCategoriesOverlayOpen] = useState(false);
   const [categoriesSlideOpen, setCategoriesSlideOpen] = useState(false);
@@ -82,11 +79,6 @@ export function LayoutComposer({ children }: PropsWithChildren) {
     forNav: CATEGORY_ORDER_NAV,
     forDesktop: CATEGORY_ORDER,
   }), []);
-  const bottomNavCategories = useMemo(() => {
-    const used = new Set(exercices.map((e) => e.category as ExerciceCategory));
-    const ordered = CATEGORY_ORDER.filter((cat) => used.has(cat));
-    return ordered.length > 0 ? ordered : CATEGORY_ORDER;
-  }, [exercices]);
   const notificationBadge = <NotificationBadge className="absolute top-1/2 -translate-y-1/2 right-2" />;
 
   // Focus mode: the session is full screen — no navigation to distract or mis-tap.
@@ -111,11 +103,11 @@ export function LayoutComposer({ children }: PropsWithChildren) {
       >
         {children}
       </main>
-      <BottomNavBar categoriesToShow={bottomNavCategories} />
+      <BottomNavBar />
     </>
   );
 
-  const hasHorseshoeNav = bottomNavCategories.length >= 5;
+  const hasHorseshoeNav = false;
 
   return (
     <LayoutProvider

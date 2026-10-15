@@ -14,7 +14,6 @@ import {
   CategoryActiveFiltersBar,
 } from '@/app/features/exercices';
 import { EmptyState } from '@/app/components/EmptyState';
-import { AddButton } from '@/app/components/ui/AddButton';
 import { TouchLink } from '@/app/components/TouchLink';
 import { estimateMinutes } from '@/app/features/seance/utils/seance.utils';
 import { getRelatedStretching } from '@/app/features/exercices/utils/stretching.utils';
@@ -47,7 +46,7 @@ export default function CategoryPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const router = useRouter();
   const params = useParams();
-  const { preserveDate, navMenuType } = useLayoutContext();
+  const { preserveDate } = useLayoutContext();
   const { isLeftHanded } = useHandPreference();
 
   const categoryParam = useMemo(() => {
@@ -247,13 +246,6 @@ export default function CategoryPage() {
           </TouchLink>
         )}
 
-        {navMenuType === 'slide' && (
-          <AddButton
-            href={preserveDate(`/exercice/add?category=${categoryParam.toLowerCase()}`)}
-            label="Ajouter un exercice"
-            className="mt-3 w-full h-10! px-3! text-sm! md:w-auto md:h-11! md:px-5! md:text-base!"
-          />
-        )}
 
         {showFilters && (
           <div className="mt-4">
@@ -335,6 +327,15 @@ export default function CategoryPage() {
               </section>
             )}
           </>
+        )}
+
+        {!loadingExercices && (
+          <TouchLink
+            href={preserveDate(`/exercice/add?category=${categoryParam.toLowerCase()}`)}
+            className="flex items-center justify-center gap-2 min-h-[48px] rounded-xl border-2 border-dashed border-gray-200 text-base font-medium text-gray-500 active:bg-gray-50"
+          >
+            + Ajouter un exercice {label === 'Étirements' ? 'd’étirement' : `« ${label} »`}
+          </TouchLink>
         )}
 
         {filters.relatedStretchingExercices.length > 0 && (

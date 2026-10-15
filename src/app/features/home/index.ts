@@ -1,4 +1,3 @@
-export { useHomeTabs } from './hooks/useHomeTabs';
 export { HomeExercicesTab } from './components/HomeExercicesTab';
 export { HomeJournalTab } from './components/HomeJournalTab';
 export { HomePinnedTab } from './components/HomePinnedTab';

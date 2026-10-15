@@ -22,14 +22,14 @@ export function PeriodProgressBar({ progress, resetFrequency }: Props) {
   const isComplete = total > 0 && done >= total;
 
   const label = useMemo(() => {
-    if (isTimeMachineMode && selectedDate) return `Au ${formatShortDate(selectedDate)}`;
+    if (isTimeMachineMode && selectedDate) return formatShortDate(selectedDate); // « Mercredi 14 octobre »
     return resetFrequency === 'WEEKLY' ? 'Cette semaine' : "Aujourd'hui";
   }, [isTimeMachineMode, selectedDate, resetFrequency]);
 
   if (!isLoading && total === 0) return null;
 
   return (
-    <div className="mb-4 relative z-10 px-3 md:px-4">
+    <div className="relative z-10">
       <div className="flex justify-between items-center mb-2">
         <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
           {label}
