@@ -42,13 +42,10 @@ test.describe('Progrès', () => {
     await page.goto('/historique');
     await page.waitForLoadState('networkidle');
 
-    await page.getByRole('button', { name: 'Ouvrir les actions' }).first().waitFor({
-      state: 'visible',
-      timeout: 15000,
-    });
-    await page.getByRole('button', { name: 'Ouvrir les actions' }).first().click();
-    await page.waitForTimeout(500);
-    await page.getByRole('button', { name: /^Modifier$/ }).first().click({ force: true });
+    // Progress rows open the edit sheet on tap
+    const firstRow = page.locator('section[aria-labelledby="progress-heading"] li button').first();
+    await firstRow.waitFor({ state: 'visible', timeout: 15000 });
+    await firstRow.click();
 
     await expect(page.getByPlaceholder('Décris ton progrès...')).toBeVisible({
       timeout: 10000,
@@ -88,11 +85,7 @@ test.describe('Progrès', () => {
 
     await expect(page.getByText(contentToDelete).first()).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole('button', { name: 'Ouvrir les actions' }).first().click();
-    await page.waitForTimeout(500);
-    const modifierBtn = page.getByRole('button', { name: /^Modifier$/ }).first();
-    await modifierBtn.scrollIntoViewIfNeeded();
-    await modifierBtn.evaluate((el: HTMLElement) => el.click());
+    await page.getByRole('button', { name: new RegExp(contentToDelete) }).first().click();
 
     await expect(page.getByRole('button', { name: '🧹 Supprimer ce progrès' })).toBeVisible({
       timeout: 15000,
