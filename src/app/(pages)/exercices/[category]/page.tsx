@@ -15,6 +15,7 @@ import {
 } from '@/app/features/exercices';
 import { EmptyState } from '@/app/components/EmptyState';
 import { TouchLink } from '@/app/components/TouchLink';
+import { ZoneSwitcher } from '@/app/features/exercices/components/ZoneSwitcher';
 import { estimateMinutes } from '@/app/features/seance/utils/seance.utils';
 import { getRelatedStretching } from '@/app/features/exercices/utils/stretching.utils';
 import type { ExerciceCategory, ExerciceStatusFilter, Exercice } from '@/app/types/exercice';
@@ -196,7 +197,7 @@ export default function CategoryPage() {
   );
 
   return (
-    <section className="pb-40 md:pb-8" aria-live="polite" aria-busy={loadingExercices}>
+    <section className="pb-6 md:pb-8" aria-live="polite" aria-busy={loadingExercices}>
       <div className="max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto pt-2 md:pt-4 px-4 md:px-6 lg:px-8">
         {exercicesError && (
           <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -211,7 +212,9 @@ export default function CategoryPage() {
           </div>
         )}
 
-        <header className={clsx('flex items-baseline justify-between gap-3', isLeftHanded && 'flex-row-reverse')}>
+        <ZoneSwitcher current={categoryParam} />
+
+        <header className={clsx('mt-4 flex items-baseline justify-between gap-3', isLeftHanded && 'flex-row-reverse')}>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">{label}</h1>
           {loadingExercices ? (
             <span className="inline-block h-5 w-24 bg-gray-200 rounded animate-pulse" />

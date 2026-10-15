@@ -98,6 +98,7 @@ export function LayoutComposer({ children }: PropsWithChildren) {
       <main
         id="main-content"
         className={clsx(
+          // Room for the fixed bottom bar on mobile (pages add only their own small padding)
           'flex-1 mx-auto w-full max-w-10xl pb-28 md:pb-8 lg:bg-white',
         )}
       >

@@ -9,7 +9,7 @@ test.describe('Connexion', () => {
     await authHelper.login(TEST_USER.username, TEST_USER.password);
 
     await expect.poll(() => new URL(page.url()).pathname).toBe('/');
-    await expect(page.getByText(/Corps|Journal|Parcours/).first()).toBeVisible({
+    await expect(page.getByText(/Mes zones|Haut du corps|Commencer ma séance/).first()).toBeVisible({
       timeout: 10000,
     });
   });

@@ -138,7 +138,7 @@ export function HistoriquePageClient() {
   const loading = loadingHistory || loadingProgress;
 
   return (
-    <div className="max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto pt-2 md:pt-4 pb-40 md:pb-8 px-4 md:px-6 lg:px-8">
+    <div className="max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto pt-2 md:pt-4 pb-6 md:pb-8 px-4 md:px-6 lg:px-8">
       <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Ma progression</h1>
 
       {loading ? (

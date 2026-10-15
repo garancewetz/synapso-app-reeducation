@@ -28,7 +28,7 @@ export default function JournalPage() {
 
   return (
     <>
-      <div className="max-w-2xl mx-auto pt-2 md:pt-4 pb-40 md:pb-8 px-4 md:px-6">
+      <div className="max-w-2xl mx-auto pt-2 md:pt-4 pb-6 md:pb-8 px-4 md:px-6">
         <BackButton className="mb-6" buttonClassName="py-3" />
 
         <div

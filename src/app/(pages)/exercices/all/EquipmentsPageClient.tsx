@@ -170,7 +170,7 @@ export function EquipmentsPageClient() {
 
 
   return (
-    <section className="pb-40 md:pb-8 min-h-screen">
+    <section className="pb-6 md:pb-8 min-h-screen">
       <div className="max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto pt-2 md:pt-4 px-4 md:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6 md:mb-8">

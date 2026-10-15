@@ -48,10 +48,7 @@ export function NavBar() {
   // ⚡ MODE SABLIER: Ajouter un padding-top si la bannière est visible
   const isBannerVisible = isDateSelected && selectedDate && !isToday(selectedDate);
 
-  const {
-    navCategories,
-    showCategoryMenu,
-  } = useLayoutContext();
+  const { navCategories } = useLayoutContext();
   const categories = navCategories.forDesktop;
   const isHomeActive = pathname === '/';
   const isHistoriqueActive = pathname === '/historique';
@@ -162,6 +159,16 @@ export function NavBar() {
                 )}
               </TouchLink>
 
+              {/* The main gesture, also on desktop (the mobile bottom bar is hidden here) */}
+              <TouchLink
+                href={preserveDate('/seance')}
+                className="mx-1 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 text-emerald-950! text-sm font-semibold hover:bg-emerald-400 transition-colors"
+                aria-label="Commencer ma séance"
+              >
+                <span aria-hidden="true">▶</span>
+                Séance
+              </TouchLink>
+
               <div ref={exercicesDropdownRef} className="relative">
                 <button
                   type="button"
@@ -175,9 +182,9 @@ export function NavBar() {
                   )}
                   aria-expanded={isExercicesDropdownOpen}
                   aria-haspopup="true"
-                  aria-label={isExercicesDropdownOpen ? 'Fermer le menu Exercices' : 'Ouvrir le menu Exercices'}
+                  aria-label={isExercicesDropdownOpen ? 'Fermer le menu Mes zones' : 'Ouvrir le menu Mes zones'}
                 >
-                  {showCategoryMenu ? 'Exercices' : 'Catégories'}
+                  Mes zones
                   <ChevronIcon
                     direction="down"
                     className={clsx('w-4 h-4 transition-transform', isExercicesDropdownOpen && 'rotate-180')}
