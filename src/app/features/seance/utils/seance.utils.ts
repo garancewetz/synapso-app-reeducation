@@ -134,3 +134,21 @@ export function estimateMinutes(exercices: Exercice[]): number {
   }, 0);
   return Math.max(1, Math.round(seconds / 60));
 }
+
+/**
+ * Exercises doable with the chosen equipment (any of them), optionally plus the
+ * ones needing no equipment at all — those can be done anywhere, so they keep a
+ * "on the mat" session from being too short.
+ */
+export function filterByEquipment(
+  exercices: Exercice[],
+  equipments: readonly string[],
+  includeNoEquipment: boolean
+): Exercice[] {
+  const wanted = new Set(equipments);
+  return exercices.filter(
+    (exercice) =>
+      exercice.equipments.some((equipment) => wanted.has(equipment)) ||
+      (includeNoEquipment && exercice.equipments.length === 0)
+  );
+}

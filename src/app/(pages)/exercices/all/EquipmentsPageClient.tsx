@@ -4,7 +4,9 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import clsx from 'clsx';
-import { ExerciceCard, useExercices, useExerciceStatusFilter, useExerciceHandlers, CategoryActiveFiltersBar } from '@/app/features/exercices';
+import { ExerciceRow, useExercices, useExerciceStatusFilter, useExerciceHandlers, CategoryActiveFiltersBar } from '@/app/features/exercices';
+import { TouchLink } from '@/app/components/TouchLink';
+import { estimateMinutes, filterByEquipment } from '@/app/features/seance/utils/seance.utils';
 import { EmptyState } from '@/app/components/EmptyState';
 import { StatusFilterSection, EquipmentFilterBadge, AddButton } from '@/app/components/ui';
 import { useLayoutContext } from '@/app/contexts/LayoutContext';
@@ -142,6 +144,29 @@ export function EquipmentsPageClient() {
 
   const hasStatusFilter = filter !== 'all';
   const [statusOpen, setStatusOpen] = useState(false);
+
+  // Session for the chosen equipment — computed on the same list as the session
+  // itself (includeArchived: true, persisted), independent of the status filter.
+  const { exercices: allExercices } = useExercices({ includeArchived: true });
+  const [includeNoEquipment, setIncludeNoEquipment] = useState(false);
+  const pendingAll = useMemo(
+    () => allExercices.filter((exercice) => !exercice.archived && !exercice.completed),
+    [allExercices]
+  );
+  const pendingWithEquipment = useMemo(
+    () => filterByEquipment(pendingAll, selectedEquipments, false),
+    [pendingAll, selectedEquipments]
+  );
+  const pendingNoEquipment = useMemo(
+    () => pendingAll.filter((exercice) => exercice.equipments.length === 0),
+    [pendingAll]
+  );
+  const sessionPlan = includeNoEquipment
+    ? [...pendingWithEquipment, ...pendingNoEquipment]
+    : pendingWithEquipment;
+  const sessionHref = preserveDate(
+    `/seance?equipments=${encodeURIComponent(selectedEquipments.join(','))}${includeNoEquipment ? '&sansMateriel=1' : ''}`
+  );
 
 
   return (
@@ -294,6 +319,35 @@ export function EquipmentsPageClient() {
           onResetAll={handleResetAllFilters}
         />
 
+        {/* "Je suis sur mon tapis" : faire tout ce qui se fait avec ce matériel. */}
+        {selectedEquipments.length > 0 && pendingWithEquipment.length + (includeNoEquipment ? pendingNoEquipment.length : 0) > 0 && (
+          <div className="mb-6 space-y-2">
+            <TouchLink
+              href={sessionHref}
+              className="flex items-center gap-4 rounded-2xl bg-emerald-500 px-5 py-3.5 text-white shadow-md active:scale-[0.98] transition-transform"
+            >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/20 text-xl" aria-hidden="true">▶</span>
+              <span>
+                <span className="block text-lg font-semibold">Lancer la séance</span>
+                <span className="block text-sm text-emerald-50">
+                  {selectedEquipments.join(', ')}{includeNoEquipment && ' + sans matériel'} · {sessionPlan.length} exercice{sessionPlan.length > 1 ? 's' : ''} · environ {estimateMinutes(sessionPlan)} min
+                </span>
+              </span>
+            </TouchLink>
+            {pendingNoEquipment.length > 0 && (
+              <label className="flex items-center gap-3 min-h-[44px] px-1 text-base text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={includeNoEquipment}
+                  onChange={(e) => setIncludeNoEquipment(e.target.checked)}
+                  className="h-5 w-5 rounded accent-emerald-600"
+                />
+                Ajouter les {pendingNoEquipment.length} exercice{pendingNoEquipment.length > 1 ? 's' : ''} sans matériel
+              </label>
+            )}
+          </div>
+        )}
+
         {/* Exercices - toujours affichés, filtrés par équipements si sélectionnés */}
         <div className="">
           {loadingExercices ? (
@@ -325,7 +379,7 @@ export function EquipmentsPageClient() {
               />
             </MotionDiv>
           ) : (
-            <div className="space-y-10 md:space-y-8">
+            <div className="space-y-6">
               {CATEGORY_ORDER.map((category) => {
                 const categoryExercices = exercicesByCategory[category];
                 const categoryIcon = CATEGORY_ICONS[category];
@@ -342,27 +396,22 @@ export function EquipmentsPageClient() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <div className="mb-4 md:mb-4">
-                      <h2 className="text-lg font-semibold text-gray-800 mb-1 mt-8 flex items-center gap-2">
-                        <span>{categoryIcon}</span>
-                        <span>{CATEGORY_LABELS[category]}</span>
-                      </h2>
-                      <p className="text-sm text-gray-500">
-                        {categoryExercices.length} exercice{categoryExercices.length > 1 ? 's' : ''}
-                      </p>
-                    </div>
-                    <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
+                    <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                      <span aria-hidden="true">{categoryIcon}</span>
+                      {CATEGORY_LABELS[category]} · {categoryExercices.length}
+                    </h2>
+                    <ul className="grid gap-2 grid-cols-1 lg:grid-cols-2">
                       {categoryExercices.map((exercice) => (
-                        <div key={exercice.id} className="h-full">
-                          <ExerciceCard
+                        <li key={exercice.id}>
+                          <ExerciceRow
                             exercice={exercice}
                             onEdit={handleEditClick}
                             onCompleted={handleCompleted}
                             onArchive={handleArchive}
                           />
-                        </div>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </MotionDiv>
                 );
               })}

@@ -12,28 +12,41 @@ import { CloseIcon } from '@/app/components/ui/icons';
 import { SeanceStep } from './SeanceStep';
 import { getRelatedStretching } from '@/app/features/exercices/utils/stretching.utils';
 import { useSessionSignals } from '../hooks/useSessionSignals';
-import { EXTRA_BATCH_SIZE, estimateMinutes, getTodayPlan, planSession } from '../utils/seance.utils';
+import { EXTRA_BATCH_SIZE, estimateMinutes, filterByEquipment, getTodayPlan, planSession } from '../utils/seance.utils';
 
 export function SeanceClient() {
   const { effectiveUser } = useUser();
   // Same query as the home (includeArchived: true) → served instantly from the
   // persisted cache; buildSessionQueue drops archived exercises.
   const { exercices: allExercices, loading, updateExercice } = useExercices({ includeArchived: true });
-  // ?category=CORE (from a zone page): play every pending exercise of that zone,
-  // then its related stretches — STRETCHING comes last in the body order, so
-  // planSession naturally puts them at the end.
-  const categoryParam = useSearchParams().get('category')?.toUpperCase() as ExerciceCategory | undefined;
+  // Scoped sessions play every pending exercise of the scope (no daily dose):
+  // - ?category=CORE (zone page): the zone, then its related stretches —
+  //   STRETCHING comes last in the body order, so planSession puts them at the end;
+  // - ?equipments=Lit/Tapis[,Chaise][&sansMateriel=1] (equipment page).
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams.get('category')?.toUpperCase() as ExerciceCategory | undefined;
   const zone = categoryParam && CATEGORY_ORDER.includes(categoryParam) ? categoryParam : null;
-  const exercices = useMemo(
-    () =>
-      zone
-        ? [
-            ...allExercices.filter((exercice) => exercice.category === zone),
-            ...getRelatedStretching(allExercices, zone),
-          ]
-        : allExercices,
-    [allExercices, zone]
+  const equipmentsParam = searchParams.get('equipments');
+  const includeNoEquipment = searchParams.get('sansMateriel') === '1';
+  const equipments = useMemo(
+    () => (equipmentsParam ? equipmentsParam.split(',').map((eq) => eq.trim()).filter(Boolean) : []),
+    [equipmentsParam]
   );
+  const scopeLabel = zone
+    ? CATEGORY_LABELS[zone]
+    : equipments.length > 0
+      ? equipments.join(', ') + (includeNoEquipment ? ' + sans matériel' : '')
+      : null;
+  const exercices = useMemo(() => {
+    if (zone) {
+      return [
+        ...allExercices.filter((exercice) => exercice.category === zone),
+        ...getRelatedStretching(allExercices, zone),
+      ];
+    }
+    if (equipments.length > 0) return filterByEquipment(allExercices, equipments, includeNoEquipment);
+    return allExercices;
+  }, [allExercices, zone, equipments, includeNoEquipment]);
   const preserveDate = usePreserveDateParam();
   const homeHref = preserveDate('/');
   const { unlockAudio, signalEnd } = useSessionSignals();
@@ -58,13 +71,13 @@ export function SeanceClient() {
 
   useEffect(() => {
     if (!effectiveUser || loading || target !== null) return;
-    if (zone) {
+    if (scopeLabel) {
       setTarget(Math.max(1, exercices.filter((exercice) => !exercice.archived && !exercice.completed).length));
       return;
     }
     const { remainingToday } = getTodayPlan(exercices);
     setTarget(remainingToday > 0 ? remainingToday : EXTRA_BATCH_SIZE);
-  }, [effectiveUser, loading, exercices, target, zone]);
+  }, [effectiveUser, loading, exercices, target, scopeLabel]);
 
   useEffect(() => {
     if (!effectiveUser || loading || target === null) return;
@@ -136,7 +149,7 @@ export function SeanceClient() {
         {current && (
           <div className="flex-1">
             <p className="text-sm font-medium text-slate-600">
-              {zone && `${CATEGORY_LABELS[zone]} · `}Exercice {position + 1} sur {steps.length}
+              {scopeLabel && `${scopeLabel} · `}Exercice {position + 1} sur {steps.length}
             </p>
             <div className="mt-1 h-2 rounded-full bg-slate-200 overflow-hidden" aria-hidden="true">
               <div

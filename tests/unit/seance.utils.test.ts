@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSessionQueue,
   estimateMinutes,
+  filterByEquipment,
   getTodayPlan,
   planSession,
   formatSeconds,
@@ -166,5 +167,22 @@ describe('getTodayPlan', () => {
       make(4),
     ];
     expect(getTodayPlan(all)).toMatchObject({ dose: 2, doneToday: 1, remainingToday: 1, pending: 1 });
+  });
+});
+
+describe('filterByEquipment', () => {
+  const make = (id: number, equipments: string[]): Exercice => ({
+    id, name: `ex${id}`, description: { text: '', comment: null },
+    workout: { repeat: null, series: null, duration: null }, equipments, bodyparts: [],
+    category: 'CORE', completed: false, completedToday: false, completedAt: null, pinned: false,
+  });
+  const all = [make(1, ['Lit/Tapis']), make(2, ['Chaise']), make(3, []), make(4, ['Chaise', 'Lit/Tapis'])];
+
+  it('keeps exercises using any chosen equipment', () => {
+    expect(filterByEquipment(all, ['Lit/Tapis'], false).map((e) => e.id)).toEqual([1, 4]);
+  });
+
+  it('optionally adds exercises without equipment', () => {
+    expect(filterByEquipment(all, ['Lit/Tapis'], true).map((e) => e.id)).toEqual([1, 3, 4]);
   });
 });
