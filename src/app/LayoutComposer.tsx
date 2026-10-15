@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback, type PropsWithChildren } from 'react';
 import dynamic from 'next/dynamic';
+import { usePathname } from 'next/navigation';
 import { SelectedDateBanner, TimeMachineWrapper } from '@/app/features/time-machine';
 import { usePreserveDateParam } from '@/app/features/time-machine';
 import { usePendingShareCount } from '@/app/features/sharing';
@@ -88,7 +89,17 @@ export function LayoutComposer({ children }: PropsWithChildren) {
   }, [exercices]);
   const notificationBadge = <NotificationBadge className="absolute top-1/2 -translate-y-1/2 right-2" />;
 
-  const timeMachineContent = (
+  // Focus mode: the session is full screen — no navigation to distract or mis-tap.
+  const isFocusMode = usePathname() === '/seance';
+
+  const timeMachineContent = isFocusMode ? (
+    <>
+      <SelectedDateBanner />
+      <main id="main-content" className="flex-1 w-full">
+        {children}
+      </main>
+    </>
+  ) : (
     <>
       <SelectedDateBanner />
       <NavBar />

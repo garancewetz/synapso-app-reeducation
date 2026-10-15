@@ -19,6 +19,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/app/lib/api-queries';
 import { useHomeTabs, HomePinnedTab, HomeSuiviTab } from '@/app/features/home';
 import { HomeExercicesView } from './HomeExercicesView';
+import { SeanceStartCard } from '@/app/features/seance';
 
 const MotionDiv = motion.div;
 
@@ -110,6 +111,13 @@ export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps
   return (
     <section>
       <div className="max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto">
+        {/* The one thing to do when opening the app: start the session. */}
+        {effectiveUser && (
+          <div className="px-3 md:px-6 lg:px-8 pt-4">
+            <SeanceStartCard />
+          </div>
+        )}
+
         {/* Welcome Header - uniquement sur la page d'accueil */}
         {welcomeHeaderSlot ?? <WelcomeHeaderWrapper />}
 
