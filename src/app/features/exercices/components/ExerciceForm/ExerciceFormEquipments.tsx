@@ -12,6 +12,7 @@ type Props = {
   onAddEquipment: (equipment: string) => void;
 };
 
+/** Equipment as quick choices; « + Autre » opens a field only when needed. */
 export function ExerciceFormEquipments({
   selectedEquipments,
   allEquipments,
@@ -20,100 +21,82 @@ export function ExerciceFormEquipments({
   onToggleEquipment,
   onAddEquipment,
 }: Props) {
+  const [isAdding, setIsAdding] = useState(false);
   const [newEquipment, setNewEquipment] = useState('');
+  // Show custom ones already picked even if they are not in the user's list yet.
+  const choices = [...allEquipments, ...selectedEquipments.filter((eq) => !allEquipments.includes(eq))];
 
-  const handleAddNewEquipment = () => {
-    const trimmedEquipment = newEquipment.trim();
-    if (trimmedEquipment && !selectedEquipments.includes(trimmedEquipment)) {
-      onAddEquipment(trimmedEquipment);
-      setNewEquipment('');
-    }
+  const addNew = () => {
+    const name = newEquipment.trim();
+    if (name && !selectedEquipments.includes(name)) onAddEquipment(name);
+    setNewEquipment('');
+    setIsAdding(false);
   };
 
+  const chip = (selected: boolean) =>
+    clsx(
+      'min-h-[44px] px-3.5 rounded-full text-base font-medium border flex items-center gap-1.5 active:scale-95 transition-colors',
+      selected ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200'
+    );
+
   return (
-    <div className="bg-gray-50 rounded-lg p-4 md:p-6">
-      <label className="block text-base font-semibold text-gray-800 mb-4">
-        Équipements (optionnel)
-      </label>
-      <p className="text-sm text-gray-500 mb-4">Sélectionnez un ou plusieurs équipements (optionnel)</p>
-      
+    <div>
+      <span className="block text-base font-medium text-gray-800 mb-2">Matériel</span>
       {loadingEquipments ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader size="md" />
-        </div>
-      ) : allEquipments.length > 0 ? (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {allEquipments.map((equipmentName) => {
-            const isSelected = selectedEquipments.includes(equipmentName);
-            const icon = equipmentIconsMap[equipmentName];
+        <Loader size="md" />
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {choices.map((name) => {
+            const isSelected = selectedEquipments.includes(name);
             return (
               <button
-                key={equipmentName}
+                key={name}
                 type="button"
-                onClick={() => onToggleEquipment(equipmentName)}
-                className={clsx(
-                  'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
-                  'flex items-center gap-2 min-w-0',
-                  'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400',
-                  'active:scale-[0.98]',
-                  isSelected
-                    ? 'bg-gray-800 text-white ring-2 ring-offset-2 ring-gray-400'
-                    : 'bg-white text-gray-700 border border-gray-200 md:hover:ring-2 md:hover:ring-gray-300/50 md:hover:ring-offset-2'
-                )}
-                aria-label={`${isSelected ? 'Désélectionner' : 'Sélectionner'} ${equipmentName}`}
+                onClick={() => onToggleEquipment(name)}
                 aria-pressed={isSelected}
+                aria-label={`${isSelected ? 'Désélectionner' : 'Sélectionner'} ${name}`}
+                className={chip(isSelected)}
               >
-                <span className="text-base">{icon}</span>
-                <span className="flex-1 text-left truncate">{equipmentName}</span>
-                {isSelected && (
-                  <CheckIcon className="w-4 h-4 shrink-0" strokeWidth={2.5} />
-                )}
+                {equipmentIconsMap[name] && <span aria-hidden="true">{equipmentIconsMap[name]}</span>}
+                {name}
+                {isSelected && <CheckIcon className="w-4 h-4" strokeWidth={2.5} />}
               </button>
             );
           })}
+          {!isAdding && (
+            <button type="button" onClick={() => setIsAdding(true)} className={chip(false)}>
+              + Autre
+            </button>
+          )}
         </div>
-      ) : (
-        <p className="text-sm text-gray-500 text-center py-4 mb-4">
-          Aucun équipement disponible pour le moment
-        </p>
       )}
-
-      <div className="pt-3 border-t border-gray-200">
-        <p className="text-sm text-gray-600 mb-2">
-          Ajouter un nouvel équipement :
-        </p>
-        <div className="flex flex-col sm:flex-row gap-2">
+      {isAdding && (
+        <div className="mt-3 flex gap-2">
           <input
             type="text"
-            placeholder="Nom de l'équipement..."
+            autoFocus
+            placeholder="Ex : élastique, haltère…"
             value={newEquipment}
             onChange={(e) => setNewEquipment(e.target.value)}
-            onKeyPress={(e) => {
+            onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
-                handleAddNewEquipment();
+                addNew();
               }
             }}
-            className="px-4 h-10 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-            aria-label="Nom du nouvel équipement"
+            aria-label="Nom du nouveau matériel"
+            className="flex-1 h-12 px-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
           <button
             type="button"
-            onClick={handleAddNewEquipment}
+            onClick={addNew}
             disabled={!newEquipment.trim()}
-            className={clsx(
-              'px-4 h-10 rounded-lg transition-colors font-medium sm:w-auto w-full',
-              'focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-400',
-              'disabled:opacity-50 disabled:cursor-not-allowed',
-              newEquipment.trim()
-                ? 'bg-gray-800 text-white hover:bg-gray-700 active:scale-[0.98]'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            )}
+            className="h-12 px-4 rounded-xl bg-gray-900 text-white font-semibold disabled:opacity-40"
           >
             Ajouter
           </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }

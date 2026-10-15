@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/app/contexts/UserContext';
 import { useUserNameValidation } from '@/app/hooks/useUserNameValidation';
@@ -46,8 +46,12 @@ export function useSettingsPage() {
     dominantHand: DominantHand;
   } | null>(null);
 
+  // Fill the form once per user: keyed on the user object, every refetch (e.g. after
+  // the persisted cache restores) reset what was being typed.
+  const loadedForUserId = useRef<number | null>(null);
   useEffect(() => {
-    if (userToEdit) {
+    if (userToEdit && loadedForUserId.current !== userToEdit.id) {
+      loadedForUserId.current = userToEdit.id;
       const loadedName = userToEdit.name || '';
       const loadedResetFrequency = (userToEdit.resetFrequency as ResetFrequency) || 'DAILY';
       const loadedDominantHand = (userToEdit.dominantHand as DominantHand) || 'RIGHT';

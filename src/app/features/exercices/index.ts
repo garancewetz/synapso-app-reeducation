@@ -10,10 +10,7 @@ export { CategoryActiveFiltersBar } from './components/CategoryActiveFiltersBar'
 export { PeriodProgressBar } from './components/PeriodProgressBar';
 
 // ExerciceForm sub-components
-export { ExerciceFormCategory } from './components/ExerciceForm/ExerciceFormCategory';
 export { ExerciceFormBodyparts } from './components/ExerciceForm/ExerciceFormBodyparts';
-export { ExerciceFormFields } from './components/ExerciceForm/ExerciceFormFields';
-export { ExerciceFormWorkout } from './components/ExerciceForm/ExerciceFormWorkout';
 export { ExerciceFormEquipments } from './components/ExerciceForm/ExerciceFormEquipments';
 
 // Hooks

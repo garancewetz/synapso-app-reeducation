@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useRef, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import clsx from 'clsx';
 import type { Exercice } from '@/app/types';
@@ -35,6 +36,8 @@ type Props = {
  */
 export const ExerciceRow = memo(function ExerciceRow({ exercice, onEdit, onCompleted, onArchive }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
   const rowRef = useRef<HTMLDivElement>(null);
   const { effectiveUser } = useUser();
   const userId = effectiveUser?.id ?? 0;
@@ -158,7 +161,13 @@ export const ExerciceRow = memo(function ExerciceRow({ exercice, onEdit, onCompl
           disabled={isPinning}
           className="border-b border-gray-200"
         />
-        <CardActionButton icon={<ShareIcon className="w-5 h-5" />} label="Partager" onClick={handleShareClick} className="border-r border-gray-200" />
+        <CardActionButton icon={<ShareIcon className="w-5 h-5" />} label="Partager" onClick={handleShareClick} className="border-r border-b border-gray-200" />
+        <CardActionButton
+          icon={<span className="text-xl">⧉</span>}
+          label="Dupliquer"
+          onClick={() => router.push(`/exercice/add?duplicate=${exercice.id}&from=${encodeURIComponent(pathname)}`)}
+          className="border-b border-gray-200"
+        />
         <CardActionButton
           icon={isArchiving ? <InlineSpinner /> : <span className="text-xl">{exercice.archived ? '📤' : '📦'}</span>}
           label={exercice.archived ? 'Désarchiver' : 'Archiver'}

@@ -19,20 +19,24 @@ const BODYPART_CATEGORIES: Array<'UPPER_BODY' | 'CORE' | 'LOWER_BODY' | 'FACE'> 
 type Props = {
   selectedBodyparts: string[];
   onToggleBodypart: (bodypart: string) => void;
+  /** Only the body parts of this zone (plus those already picked); all for stretching. */
+  category?: ExerciceCategory;
 };
 
-export function ExerciceFormBodyparts({ selectedBodyparts, onToggleBodypart }: Props) {
-  const bodypartsByCategory = BODYPART_CATEGORIES.map((category) =>
-    AVAILABLE_BODYPARTS.filter((bp) => BODYPART_TO_CATEGORY[bp] === category)
-  );
+export function ExerciceFormBodyparts({ selectedBodyparts, onToggleBodypart, category }: Props) {
+  const zones = category && category !== 'STRETCHING' ? [category] : BODYPART_CATEGORIES;
+  const bodypartsByCategory = zones
+    .map((zone) =>
+      AVAILABLE_BODYPARTS.filter(
+        (bp) => BODYPART_TO_CATEGORY[bp] === zone || (zones.length === 1 && selectedBodyparts.includes(bp))
+      )
+    )
+    .filter((list) => list.length > 0);
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4 md:p-6">
-      <label className="block text-base font-semibold text-gray-800 mb-2">
-        Parties du corps ciblées
-      </label>
-      <p className="text-sm text-gray-500 mb-4">Sélectionnez une ou plusieurs parties du corps</p>
-      <div className="space-y-3">
+    <div>
+      <span className="block text-base font-medium text-gray-800 mb-2">Parties du corps</span>
+      <div className="space-y-2">
         {bodypartsByCategory.map((bodyparts) => (
           <div key={bodyparts[0]} className="flex flex-wrap gap-2">
             {bodyparts.map((bodypart) => {
@@ -45,8 +49,9 @@ export function ExerciceFormBodyparts({ selectedBodyparts, onToggleBodypart }: P
                   key={bodypart}
                   type="button"
                   onClick={() => onToggleBodypart(bodypart)}
+                  aria-pressed={isSelected}
                   className={clsx(
-                    'px-3 py-2 rounded-lg text-sm transition-all duration-200 cursor-pointer',
+                    'min-h-[44px] px-3 py-2 rounded-lg text-base transition-all duration-200 cursor-pointer',
                     'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400',
                     'active:scale-[0.98]',
                     'border-2',
