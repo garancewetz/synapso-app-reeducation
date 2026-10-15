@@ -176,21 +176,29 @@ export function SeanceClient() {
         />
       ) : (
         <section className="py-12 text-center space-y-4">
-          <p className="text-6xl" aria-hidden="true">{doneCount > 0 ? '🎉' : '✨'}</p>
+          {/* Three endings: done some (bravo), skipped everything (no guilt, resume
+              later), nothing was left to do. */}
+          <p className="text-6xl" aria-hidden="true">{doneCount > 0 ? '🎉' : skipped.length > 0 ? '🌿' : '✨'}</p>
           <h1 className="text-3xl font-bold text-slate-900">
-            {doneCount > 0 ? 'Séance terminée, bravo\u00a0!' : 'Tout est déjà fait'}
+            {doneCount > 0
+              ? 'Séance terminée, bravo\u00a0!'
+              : skipped.length > 0
+                ? 'Pas de souci'
+                : 'Tout est déjà fait'}
           </h1>
           <p className="text-lg text-slate-600">
             {doneCount > 0
               ? `${doneCount} exercice${doneCount > 1 ? 's' : ''} fait${doneCount > 1 ? 's' : ''}.`
-              : 'Aucun exercice ne t’attend pour le moment.'}
+              : skipped.length > 0
+                ? 'Tu peux reprendre les exercices passés maintenant, ou plus tard.'
+                : 'Aucun exercice ne t’attend pour le moment.'}
           </p>
           {/* Finishing is the success, not a debt: "Terminer" is the main action,
               doing more is an open door. */}
           <div className="flex flex-col gap-3 pt-4">
             <Link
               href={homeHref}
-              className="w-full min-h-[56px] rounded-2xl bg-slate-900 text-white text-lg font-semibold flex items-center justify-center"
+              className="w-full min-h-[56px] rounded-2xl bg-slate-900 text-white! text-lg font-semibold flex items-center justify-center"
             >
               {doneCount > 0 ? 'Terminer pour aujourd’hui' : 'Retour à l’accueil'}
             </Link>

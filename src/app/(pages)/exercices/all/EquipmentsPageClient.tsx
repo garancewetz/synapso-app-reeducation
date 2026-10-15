@@ -322,12 +322,12 @@ export function EquipmentsPageClient() {
           <div className="mb-6 space-y-2">
             <TouchLink
               href={sessionHref}
-              className="flex items-center gap-4 rounded-2xl bg-emerald-500 px-5 py-3.5 text-white shadow-md active:scale-[0.98] transition-transform"
+              className="flex items-center gap-4 rounded-2xl bg-emerald-500 px-5 py-3.5 text-emerald-950! shadow-md active:scale-[0.98] transition-transform"
             >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/20 text-xl" aria-hidden="true">▶</span>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/30 text-xl" aria-hidden="true">▶</span>
               <span>
                 <span className="block text-lg font-semibold">Lancer la séance</span>
-                <span className="block text-sm text-emerald-50">
+                <span className="block text-sm text-emerald-900">
                   {selectedEquipments.join(', ')}{includeNoEquipment && ' + sans matériel'} · {sessionPlan.length} exercice{sessionPlan.length > 1 ? 's' : ''} · environ {estimateMinutes(sessionPlan)} min
                 </span>
               </span>

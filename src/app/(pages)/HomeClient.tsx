@@ -38,13 +38,6 @@ export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps
   const pinnedProgress = useMemo(() => progressList.filter(p => p.pinned), [progressList]);
   const pinnedNotes = useMemo(() => journalNotes.filter(n => n.pinned), [journalNotes]);
   const hasPinned = pinnedExercices.length + pinnedProgress.length + pinnedNotes.length > 0;
-  const completedExerciceIds = useMemo(() => {
-    const ids = new Set<number>();
-    for (const ex of exercices) {
-      if (ex.completed) ids.add(ex.id);
-    }
-    return ids;
-  }, [exercices]);
 
   const { handleEditClick: handlePinnedEdit, handleCompleted: handlePinnedUpdate } = useExerciceHandlers({
     updateExercice,
@@ -53,8 +46,6 @@ export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps
 
 
 
-  // No-op stable pour afficher le bouton Partager (la logique est dans useShareProgress du ProgressCard)
-  const handleShareProgress = useCallback(() => {}, []);
 
   const handleProgressSuccess = useCallback(() => {
     queryClient.invalidateQueries({
@@ -133,10 +124,8 @@ export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps
                       pinnedExercices={pinnedExercices}
                       pinnedProgress={pinnedProgress}
                       pinnedNotes={pinnedNotes}
-                      completedExerciceIds={completedExerciceIds}
                       onEdit={handlePinnedEdit}
                       onEditProgress={progressModal.openForEdit}
-                      onShareProgress={handleShareProgress}
                       onCompleted={handlePinnedUpdate}
                       onArchive={handlePinnedUpdate}
                       onNoteUpdated={refetchNotes}

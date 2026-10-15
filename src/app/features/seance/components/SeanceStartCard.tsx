@@ -36,7 +36,7 @@ export function SeanceStartCard() {
         <p className="text-lg font-medium text-emerald-800">✅ Séance du jour faite, bravo&nbsp;!</p>
         <Link
           href={preserveDate('/seance')}
-          className="shrink-0 min-h-[44px] flex items-center px-3 rounded-xl text-base font-semibold text-emerald-700 underline underline-offset-4"
+          className="shrink-0 min-h-[44px] flex items-center px-3 rounded-xl text-base font-semibold text-emerald-700! underline underline-offset-4"
         >
           En faire plus
         </Link>
@@ -55,14 +55,14 @@ export function SeanceStartCard() {
   return (
     <Link
       href={preserveDate('/seance')}
-      className="flex items-center gap-4 rounded-2xl bg-emerald-500 px-5 py-4 text-white shadow-lg active:scale-[0.98] transition-transform focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
+      className="flex items-center gap-4 rounded-2xl bg-emerald-500 px-5 py-4 text-emerald-950! shadow-lg active:scale-[0.98] transition-transform focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300"
     >
-      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/20 text-2xl" aria-hidden="true">
+      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/30 text-2xl" aria-hidden="true">
         ▶
       </span>
       <span>
         <span className="block text-xl font-semibold">Commencer ma séance</span>
-        <span className="block text-base text-emerald-50">
+        <span className="block text-base text-emerald-900">
           {plan.length} exercice{plan.length > 1 ? 's' : ''} · environ {estimateMinutes(plan)} min
         </span>
       </span>

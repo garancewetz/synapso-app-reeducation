@@ -38,11 +38,11 @@ export const HomeExercicesTab = memo(function HomeExercicesTab({
       <HomeCategoryList exercices={activeExercices} loading={loading} />
       {/* Management tools, not daily needs: kept discreet. */}
       <nav aria-label="Autres vues" className="flex flex-wrap justify-center gap-x-6 gap-y-2 pt-1 text-sm">
-        <TouchLink href={preserveDate('/exercices/all')} className="py-2 font-medium text-gray-500 underline-offset-4 md:hover:underline">
+        <TouchLink href={preserveDate('/exercices/all')} className="py-2 font-medium text-gray-500! underline-offset-4 md:hover:underline">
           Par équipement
         </TouchLink>
         {archivedCount > 0 && (
-          <TouchLink href={preserveDate('/exercices/archived')} className="py-2 font-medium text-gray-500 underline-offset-4 md:hover:underline">
+          <TouchLink href={preserveDate('/exercices/archived')} className="py-2 font-medium text-gray-500! underline-offset-4 md:hover:underline">
             Archivés ({archivedCount})
           </TouchLink>
         )}

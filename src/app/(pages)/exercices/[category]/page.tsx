@@ -226,12 +226,12 @@ export default function CategoryPage() {
         {!loadingExercices && sessionPlan.length > 0 && (
           <TouchLink
             href={preserveDate(`/seance?category=${categoryParam}`)}
-            className="mt-4 flex items-center gap-4 rounded-2xl bg-emerald-500 px-5 py-3.5 text-white shadow-md active:scale-[0.98] transition-transform"
+            className="mt-4 flex items-center gap-4 rounded-2xl bg-emerald-500 px-5 py-3.5 text-emerald-950! shadow-md active:scale-[0.98] transition-transform"
           >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/20 text-xl" aria-hidden="true">▶</span>
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/30 text-xl" aria-hidden="true">▶</span>
             <span>
               <span className="block text-lg font-semibold">Lancer la séance</span>
-              <span className="block text-sm text-emerald-50">
+              <span className="block text-sm text-emerald-900">
                 {[
                   label,
                   pendingInCategory.length > 0 &&
@@ -332,7 +332,7 @@ export default function CategoryPage() {
         {!loadingExercices && (
           <TouchLink
             href={preserveDate(`/exercice/add?category=${categoryParam.toLowerCase()}`)}
-            className="flex items-center justify-center gap-2 min-h-[48px] rounded-xl border-2 border-dashed border-gray-200 text-base font-medium text-gray-500 active:bg-gray-50"
+            className="flex items-center justify-center gap-2 min-h-[48px] rounded-xl border-2 border-dashed border-gray-200 text-base font-medium text-gray-500! active:bg-gray-50"
           >
             + Ajouter un exercice {label === 'Étirements' ? 'd’étirement' : `« ${label} »`}
           </TouchLink>

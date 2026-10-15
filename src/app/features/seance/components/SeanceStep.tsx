@@ -125,7 +125,7 @@ export function SeanceStep({ exercice, userId, onDone, onSkip, onCompleted, unlo
             onClick={handleDone}
             disabled={isCompleting}
             className={clsx(
-              'flex-1 min-h-[64px] rounded-2xl bg-emerald-500 text-white text-xl font-semibold flex items-center justify-center gap-2 shadow-lg active:scale-[0.98]',
+              'flex-1 min-h-[64px] rounded-2xl bg-emerald-500 text-emerald-950 text-xl font-semibold flex items-center justify-center gap-2 shadow-lg active:scale-[0.98]',
               allSeriesDone && 'ring-4 ring-emerald-200'
             )}
           >

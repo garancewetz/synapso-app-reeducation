@@ -45,7 +45,7 @@ export const BottomNavBar = memo(function BottomNavBar() {
       aria-current={isActive ? 'page' : undefined}
       className={clsx(
         'flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[56px] rounded-2xl transition-colors',
-        isActive ? 'text-gray-900 bg-gray-100' : 'text-gray-500'
+        isActive ? 'text-gray-900! bg-gray-100' : 'text-gray-500!'
       )}
     >
       {icon}
@@ -70,7 +70,7 @@ export const BottomNavBar = memo(function BottomNavBar() {
         <TouchLink
           href={preserveDate('/seance')}
           aria-label="Commencer ma séance"
-          className="flex-[1.3] flex items-center justify-center gap-2 min-h-[56px] rounded-2xl bg-emerald-500 text-white shadow-md active:scale-[0.97] transition-transform"
+          className="flex-[1.3] flex items-center justify-center gap-2 min-h-[56px] rounded-2xl bg-emerald-500 text-emerald-950! shadow-md active:scale-[0.97] transition-transform"
         >
           <span className="text-lg leading-none" aria-hidden="true">▶</span>
           <span className="text-base font-semibold">Séance</span>
