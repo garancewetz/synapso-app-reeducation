@@ -28,15 +28,15 @@ export function getCurrentPageName(pathname: string): string | null {
 
   // Journal
   if (path === '/journal') {
-    return 'Journal';
+    return 'Notes';
   }
 
   if (path === '/journal/add') {
-    return 'Ajouter une note';
+    return 'Nouvelle note';
   }
 
   if (path.startsWith('/journal/edit/')) {
-    return 'Modifier une note';
+    return 'Modifier la note';
   }
 
   // Exercices
@@ -50,7 +50,7 @@ export function getCurrentPageName(pathname: string): string | null {
 
   // Page vue globale
   if (path === '/exercices/all' || path.startsWith('/exercices/all')) {
-    return 'Vue globale';
+    return 'Par équipement';
   }
 
   // Pages d'exercices par catégorie - extraire la catégorie de l'URL

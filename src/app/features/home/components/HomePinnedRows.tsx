@@ -17,10 +17,12 @@ const rowClass = 'relative flex items-center gap-3 min-h-[64px] rounded-xl borde
 type NoteRowProps = {
   note: JournalNote;
   onUpdated?: () => void;
+  /** Open in place (journal list) instead of navigating to the edit page. */
+  onOpen?: () => void;
 };
 
 /** Pinned note as one line: tap to open it, round check to validate it for today. */
-export function PinnedNoteRow({ note, onUpdated }: NoteRowProps) {
+export function PinnedNoteRow({ note, onUpdated, onOpen }: NoteRowProps) {
   const { effectiveUser } = useUser();
   const { referenceDateKey } = useTimeContext();
   const { handleValidateOrUnvalidate, isValidating, isValidatedForReferenceDay } = useValidateJournalNote({
@@ -35,17 +37,29 @@ export function PinnedNoteRow({ note, onUpdated }: NoteRowProps) {
     ? `${linked} exercice${linked > 1 ? 's' : ''} lié${linked > 1 ? 's' : ''}`
     : note.description?.split('\n')[0];
 
+  const body = (
+    <>
+      <span className="text-xl shrink-0" aria-hidden="true">📝</span>
+      <span className="min-w-0">
+        <span className={clsx('block truncate text-base font-semibold', isValidatedForReferenceDay ? 'text-gray-400' : 'text-gray-800')}>
+          {note.title || 'Note sans titre'}
+        </span>
+        {subtitle && <span className="block truncate text-sm text-gray-500">{subtitle}</span>}
+      </span>
+    </>
+  );
+
   return (
     <div className={rowClass}>
-      <TouchLink href={`/journal/edit/${note.id}`} className="flex flex-1 min-w-0 items-center gap-3 py-2.5">
-        <span className="text-xl shrink-0" aria-hidden="true">📝</span>
-        <span className="min-w-0">
-          <span className={clsx('block truncate text-base font-semibold', isValidatedForReferenceDay ? 'text-gray-400' : 'text-gray-800')}>
-            {note.title || 'Note sans titre'}
-          </span>
-          {subtitle && <span className="block truncate text-sm text-gray-500">{subtitle}</span>}
-        </span>
-      </TouchLink>
+      {onOpen ? (
+        <button type="button" onClick={onOpen} aria-label={`Ouvrir la note ${note.title}`} className="flex flex-1 min-w-0 items-center gap-3 py-2.5 text-left">
+          {body}
+        </button>
+      ) : (
+        <TouchLink href={`/journal/edit/${note.id}`} className="flex flex-1 min-w-0 items-center gap-3 py-2.5">
+          {body}
+        </TouchLink>
+      )}
       <button
         type="button"
         onClick={handleValidateOrUnvalidate}

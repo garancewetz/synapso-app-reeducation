@@ -8,7 +8,7 @@ import { ExerciceRow, useExercices, useExerciceStatusFilter, useExerciceHandlers
 import { TouchLink } from '@/app/components/TouchLink';
 import { estimateMinutes, filterByEquipment } from '@/app/features/seance/utils/seance.utils';
 import { EmptyState } from '@/app/components/EmptyState';
-import { StatusFilterSection, EquipmentFilterBadge, AddButton } from '@/app/components/ui';
+import { EquipmentFilterBadge } from '@/app/components/ui';
 import { useLayoutContext } from '@/app/contexts/LayoutContext';
 import { useHandPreference } from '@/app/hooks/useHandPreference';
 import { NAVIGATION_EMOJIS } from '@/app/constants/emoji.constants';
@@ -16,11 +16,9 @@ import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
   CATEGORY_ICONS,
-  EXERCICE_STATUS_FILTER_OPTIONS
 } from '@/app/constants/exercice.constants';
 import { getEquipmentIcon } from '@/app/constants/equipment.constants';
 import { useEquipmentMetadata } from '@/app/hooks/useEquipmentMetadata';
-import { ChevronIcon } from '@/app/components/ui/icons';
 import type { Exercice, ExerciceCategory, ExerciceStatusFilter } from '@/app/types/exercice';
 
 const MotionDiv = dynamic(
@@ -120,6 +118,10 @@ export function EquipmentsPageClient() {
     filteredExercices.forEach(ex => {
       grouped[ex.category].push(ex);
     });
+    // Same reading order as the zone pages: what is left to do first, done ones after.
+    (Object.keys(grouped) as ExerciceCategory[]).forEach((category) => {
+      grouped[category].sort((a, b) => Number(a.completed) - Number(b.completed));
+    });
     
     return grouped;
   }, [filteredExercices]);
@@ -139,11 +141,7 @@ export function EquipmentsPageClient() {
     setSelectedEquipments([]);
   }, []);
 
-  const statusLabel =
-    EXERCICE_STATUS_FILTER_OPTIONS.find((opt) => opt.value === filter)?.label ?? 'Tous les exercices';
 
-  const hasStatusFilter = filter !== 'all';
-  const [statusOpen, setStatusOpen] = useState(false);
 
   // Session for the chosen equipment — computed on the same list as the session
   // itself (includeArchived: true, persisted), independent of the status filter.
@@ -195,11 +193,6 @@ export function EquipmentsPageClient() {
                 </p>
               )}
             </div>
-                        <AddButton
-                href={preserveDate('/exercice/add')}
-                label="Ajouter un exercice"
-                className="shrink-0 w-full h-10! px-3! text-sm! md:w-auto md:h-11! md:px-5! md:text-base!"
-              />
           </div>
           
           {/* Filtres */}
@@ -248,61 +241,6 @@ export function EquipmentsPageClient() {
               )}
             </div>
 
-            {/* Filtre d'état : Tous / Non faits / Faits (section repliable, comme sur la page catégorie) */}
-            <div className="rounded-lg border border-gray-200 bg-gray-50/80">
-              <button
-                type="button"
-                onClick={() => setStatusOpen((prev) => !prev)}
-                className={clsx(
-                  'w-full flex items-center justify-between gap-3 min-h-[44px] py-3 px-4',
-                  'text-sm font-medium text-gray-800',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-400 focus-visible:ring-inset rounded-lg',
-                  'active:bg-gray-100/80 transition-colors duration-200'
-                )}
-                aria-expanded={statusOpen}
-                aria-controls="equipments-status-filters"
-                aria-label={
-                  statusOpen
-                    ? 'Masquer les filtres par état'
-                    : 'Afficher les filtres par état'
-                }
-              >
-                <span className="flex items-center gap-2">
-                  Filtrer par état
-                  {hasStatusFilter && (
-                    <span
-                      className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-gray-400 text-gray-900 text-xs font-semibold"
-                      aria-hidden
-                    >
-                      1
-                    </span>
-                  )}
-                </span>
-                <span className="text-xs font-normal text-gray-600">
-                  {statusLabel}
-                </span>
-                <ChevronIcon
-                  direction={statusOpen ? 'up' : 'down'}
-                  className={clsx(
-                    'w-5 h-5 text-gray-700 shrink-0 transition-transform duration-300 ease-out',
-                    statusOpen && 'text-gray-900'
-                  )}
-                  aria-hidden
-                />
-              </button>
-              <div
-                id="equipments-status-filters"
-                className={clsx(
-                  'overflow-hidden transition-all duration-300 ease-out',
-                  statusOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
-                )}
-                aria-hidden={!statusOpen}
-              >
-                <div className="pt-1 pb-4 px-4">
-                  <StatusFilterSection filter={filter} onFilterChange={setFilter} />
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -415,6 +353,12 @@ export function EquipmentsPageClient() {
               })}
             </div>
           )}
+          <TouchLink
+            href={preserveDate('/exercice/add')}
+            className="mt-6 flex items-center justify-center gap-2 min-h-[48px] rounded-xl border-2 border-dashed border-gray-200 text-base font-medium text-gray-500! active:bg-gray-50"
+          >
+            + Ajouter un exercice
+          </TouchLink>
         </div>
       </div>
     </section>

@@ -30,7 +30,8 @@ export function BackButton({
     }
     
     const pageName = getCurrentPageName(backHref);
-    return pageName ? `Retour à ${pageName.toLowerCase()}` : null;
+    // Page name alone after the chevron (« ‹ Notes »): « Retour à journal » read badly.
+    return pageName;
   }, [backHref, backLabel]);
 
   // Obtenir l'emoji de la page de retour
@@ -65,7 +66,7 @@ export function BackButton({
         size="md"
         rounded="lg"
         className={buttonStyles}
-        aria-label={label}
+        aria-label={`Retour : ${label}`}
       >
         <ChevronIcon className="w-6 h-6 text-gray-700" direction="left" />
         {pageEmoji && <span>{pageEmoji}</span>}

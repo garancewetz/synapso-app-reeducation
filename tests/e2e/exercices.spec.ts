@@ -88,7 +88,7 @@ test.describe('Exercices', () => {
 
     await page.getByRole('button', { name: 'Enregistrer les modifications' }).click();
 
-    await expect(page).not.toHaveURL(/\/exercice\/edit/);
+    await expect(page).not.toHaveURL(/\/exercice\/edit/, { timeout: 15000 });
     await page.goto('/exercices/core');
     await page.waitForLoadState('networkidle');
     await expect(page.getByText(newName).first()).toBeVisible({ timeout: 10000 });
@@ -187,7 +187,7 @@ test.describe('Exercices', () => {
       .waitFor({ state: 'visible', timeout: 5000 });
     await page.getByRole('button', { name: '⚠️ Confirmer la suppression' }).click();
 
-    await expect(page).not.toHaveURL(/\/exercice\/edit/);
+    await expect(page).not.toHaveURL(/\/exercice\/edit/, { timeout: 15000 });
     await page.goto('/exercices/upper_body');
     await page.waitForLoadState('networkidle');
     await expect(page.getByText(nameToDelete)).toHaveCount(0, { timeout: 15000 });

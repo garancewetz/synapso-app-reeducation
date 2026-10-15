@@ -69,7 +69,7 @@ export function SettingsProfilSection({
           Préférence de main
         </label>
         <p className="text-sm text-gray-500 mb-4">
-          Choisissez votre préférence de main pour positionner les boutons principaux (menu, victoire, etc.) du bon côté
+          Les boutons principaux se placent du côté de ta main dominante.
         </p>
         <ToggleButtonGroup
           options={[
@@ -84,15 +84,15 @@ export function SettingsProfilSection({
 
       <Card variant="default" padding="md">
         <label className="block text-base font-semibold text-gray-800 mb-2">
-          Réinitialisation des exercices
+          Mon rythme
         </label>
         <p className="text-sm text-gray-500 mb-4">
-          Choisissez la fréquence de réinitialisation des exercices complétés
+          À quelle fréquence veux-tu faire tous tes exercices ?
         </p>
         <ToggleButtonGroup
           options={[
             { value: 'DAILY', label: 'Tous les jours' },
-            { value: 'WEEKLY', label: 'Une fois par semaine' },
+            { value: 'WEEKLY', label: 'Sur la semaine' },
           ]}
           value={resetFrequency}
           onChange={(value) => setResetFrequency(value as ResetFrequency)}
@@ -100,10 +100,10 @@ export function SettingsProfilSection({
         />
         <div className="mt-3 text-sm text-gray-500 space-y-1">
           {resetFrequency === 'DAILY' && (
-            <p>Les exercices complétés sont réinitialisés chaque jour à minuit</p>
+            <p>Chaque jour, tes exercices sont à refaire. La séance du jour en propose 5.</p>
           )}
           {resetFrequency === 'WEEKLY' && (
-            <p>Les exercices complétés sont réinitialisés chaque lundi à minuit</p>
+            <p>Tu as la semaine pour tout faire (on recommence le lundi). La séance du jour en propose 5.</p>
           )}
         </div>
       </Card>

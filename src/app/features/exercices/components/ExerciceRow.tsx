@@ -86,26 +86,39 @@ export const ExerciceRow = memo(function ExerciceRow({ exercice, onEdit, onCompl
           )}
         </button>
 
-        <div className="relative">
+        {exercice.archived ? (
+          // Archived: ticking makes no sense — the useful action is to bring it back.
           <button
             type="button"
-            onClick={handleComplete}
-            disabled={isCompleting}
-            aria-pressed={exercice.completedToday}
-            aria-label={exercice.completedToday ? `Démarquer ${exercice.name}` : `Marquer ${exercice.name} comme fait`}
-            className="flex items-center justify-center w-12 h-12 rounded-full active:scale-95 transition-transform"
+            onClick={handleArchive}
+            disabled={isArchiving}
+            aria-label={`Restaurer ${exercice.name}`}
+            className="min-h-[44px] px-3 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700 active:scale-95"
           >
-            <span
-              className={clsx(
-                'flex items-center justify-center w-8 h-8 rounded-full border-2 transition-colors',
-                isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-gray-300 text-transparent'
-              )}
-            >
-              {isCompleting ? <InlineSpinner /> : <CheckIcon className="w-4 h-4" />}
-            </span>
+            {isArchiving ? <InlineSpinner /> : 'Restaurer'}
           </button>
-          {showSuccess && <LazyConfettiValidate show centerX={50} centerY={50} />}
-        </div>
+        ) : (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={handleComplete}
+              disabled={isCompleting}
+              aria-pressed={exercice.completedToday}
+              aria-label={exercice.completedToday ? `Démarquer ${exercice.name}` : `Marquer ${exercice.name} comme fait`}
+              className="flex items-center justify-center w-12 h-12 rounded-full active:scale-95 transition-transform"
+            >
+              <span
+                className={clsx(
+                  'flex items-center justify-center w-8 h-8 rounded-full border-2 transition-colors',
+                  isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-gray-300 text-transparent'
+                )}
+              >
+                {isCompleting ? <InlineSpinner /> : <CheckIcon className="w-4 h-4" />}
+              </span>
+            </button>
+            {showSuccess && <LazyConfettiValidate show centerX={50} centerY={50} />}
+          </div>
+        )}
 
         <button
           type="button"

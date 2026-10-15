@@ -78,7 +78,7 @@ test.describe('Mode Sablier (Time Machine)', () => {
 
     const hasExercicesSection = await modal.getByText('Exercices faits').isVisible({ timeout: 2000 }).catch(() => false);
     const hasProgressSection = await modal.getByText('Progrès').isVisible({ timeout: 2000 }).catch(() => false);
-    const hasEmptyMessage = await modal.getByText(/Aucun exercice fait le|Jour de repos/).isVisible({ timeout: 2000 }).catch(() => false);
+    const hasEmptyMessage = await modal.getByText(/Pas d’exercice ce jour-là|Jour de repos/).isVisible({ timeout: 2000 }).catch(() => false);
     const hasAddButton = await modal.getByRole('button', { name: /Ajouter des exercices pour ce jour|Modifier les exercices pour ce jour/ }).isVisible({ timeout: 2000 }).catch(() => false);
 
     expect(hasExercicesSection || hasProgressSection || hasEmptyMessage || hasAddButton).toBeTruthy();
@@ -281,7 +281,7 @@ test.describe('Mode Sablier (Time Machine)', () => {
     expect(page.url()).toContain('/journal/add');
     expect(page.url()).toContain(`date=${yesterdayDate}`);
 
-    const backToJournal = page.getByRole('link', { name: /Retour à journal/ });
+    const backToJournal = page.getByRole('link', { name: /Retour : Notes/ });
     await expect(backToJournal).toBeVisible({ timeout: 10000 });
     await backToJournal.click();
 

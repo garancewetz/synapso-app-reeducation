@@ -184,7 +184,7 @@ export function JournalNoteForm({ noteId, onSuccess, onCancel }: Props) {
           required
           value={formData.title}
           onValueChange={handleTitleChange}
-          placeholder="Titre de l'entrée"
+          placeholder="Titre de la note"
           disabled={loadingInitial}
         />
 
@@ -253,7 +253,7 @@ export function JournalNoteForm({ noteId, onSuccess, onCancel }: Props) {
           showDelete={!!effectiveNoteId}
           onDelete={handleDelete}
           deleteConfirm={showDeleteConfirm}
-          deleteLabel="Supprimer l'entrée"
+          deleteLabel="Supprimer la note"
           deleteConfirmLabel="Confirmer la suppression"
         />
 

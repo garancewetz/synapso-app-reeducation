@@ -140,13 +140,14 @@ export function DayDetailModalBody({
               </div>
               <p className="text-gray-700 text-lg font-semibold">
                 {hasNoExercises && isPastDay
-                  ? `Aucun exercice fait le ${formattedDate}`
+                  ? 'Pas d’exercice ce jour-là'
                   : 'Jour de repos'}
               </p>
               <p className="text-gray-400 text-sm mt-1">
                 {hasNoExercises && isPastDay
                   ? canAddExercises
-                    ? 'Tu as oublié de noter tes exercices ?'
+                    // Gentle, no guilt: the date is already the sheet title.
+                    ? 'Tu en as fait sans les cocher ? Tu peux les ajouter.'
                     : `Tu ne peux remonter que jusqu'à ${MAX_TIME_MACHINE_DAYS} jours en arrière`
                   : "Chaque jour est différent, c'est ok !"}
               </p>

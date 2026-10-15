@@ -104,7 +104,7 @@ export const UserSetup = memo(function UserSetup({ userId, onComplete }: Props) 
           {/* Section Rythme */}
           <Card variant="default" padding="lg">
             <label className="block text-base font-semibold text-gray-800 mb-2">
-              Réinitialisation des exercices
+              Mon rythme
             </label>
             <p className="text-sm text-gray-500 mb-4">
               Les exercices complétés seront réinitialisés selon ce rythme
@@ -113,7 +113,7 @@ export const UserSetup = memo(function UserSetup({ userId, onComplete }: Props) 
             <ToggleButtonGroup
               options={[
                 { value: 'DAILY', label: 'Tous les jours' },
-                { value: 'WEEKLY', label: 'Une fois par semaine' },
+                { value: 'WEEKLY', label: 'Sur la semaine' },
               ]}
               value={resetFrequency}
               onChange={(value) => setResetFrequency(value as ResetFrequency)}
@@ -121,10 +121,10 @@ export const UserSetup = memo(function UserSetup({ userId, onComplete }: Props) 
             />
             <div className="mt-3 text-sm text-gray-500">
               {resetFrequency === 'DAILY' && (
-                <p>Les exercices complétés sont réinitialisés chaque jour à minuit</p>
+                <p>Chaque jour, tes exercices sont à refaire. La séance du jour en propose 5.</p>
               )}
               {resetFrequency === 'WEEKLY' && (
-                <p>Les exercices complétés sont réinitialisés chaque lundi à minuit</p>
+                <p>Tu as la semaine pour tout faire (on recommence le lundi). La séance du jour en propose 5.</p>
               )}
             </div>
           </Card>

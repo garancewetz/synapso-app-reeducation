@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { ExerciceCard, useExercices, useExerciceHandlers } from '@/app/features/exercices';
+import { ExerciceRow, useExercices, useExerciceHandlers } from '@/app/features/exercices';
 import { EmptyState } from '@/app/components/EmptyState';
 import { NAVIGATION_EMOJIS } from '@/app/constants/emoji.constants';
 import {
@@ -109,27 +109,22 @@ export function ArchivedPageClient() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <div className="mb-4 md:mb-4">
-                      <h2 className="text-lg font-semibold text-gray-800 mb-1 mt-8 flex items-center gap-2">
-                        <span>{categoryIcon}</span>
-                        <span>{CATEGORY_LABELS[category]}</span>
-                      </h2>
-                      <p className="text-sm text-gray-500">
-                        {categoryExercices.length} exercice{categoryExercices.length > 1 ? 's' : ''}
-                      </p>
-                    </div>
-                    <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
+                    <h2 className="mt-6 mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                      <span aria-hidden="true">{categoryIcon}</span>
+                      {CATEGORY_LABELS[category]} · {categoryExercices.length}
+                    </h2>
+                    <ul className="grid gap-2 grid-cols-1 lg:grid-cols-2">
                       {categoryExercices.map((exercice) => (
-                        <div key={exercice.id} className="h-full">
-                          <ExerciceCard
+                        <li key={exercice.id}>
+                          <ExerciceRow
                             exercice={exercice}
                             onEdit={handleEditClick}
                             onCompleted={handleCompleted}
                             onArchive={handleArchive}
                           />
-                        </div>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </MotionDiv>
                 );
               })}

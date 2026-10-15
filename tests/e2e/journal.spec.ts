@@ -31,7 +31,7 @@ test.describe('Journal', () => {
     await page.getByRole('button', { name: 'Ajouter une note' }).click();
 
     const title = 'Entrée E2E ' + Date.now();
-    await page.getByPlaceholder('Titre de l\'entrée').fill(title);
+    await page.getByPlaceholder('Titre de la note').fill(title);
     await page.getByRole('button', { name: 'Terminer' }).click();
 
     await expect(page).toHaveURL(/\/journal/, { timeout: 10000 });
@@ -39,6 +39,8 @@ test.describe('Journal', () => {
       (res) => res.url().includes('/api/journal/notes') && res.request().method() === 'GET',
       { timeout: 15000 }
     );
+    // Notes are compact rows: open it to get the full card
+    await page.getByRole('button', { name: `Ouvrir la note ${title}` }).click();
     const createdNoteCard = page.getByRole('article', { name: `Entrée : ${title}` });
     await expect(createdNoteCard).toBeVisible({ timeout: 15000 });
   });
@@ -53,7 +55,7 @@ test.describe('Journal', () => {
 
     const title = 'Entrée E2E à éditer ' + Date.now();
     await page.getByRole('button', { name: 'Ajouter une note' }).click();
-    await page.getByPlaceholder('Titre de l\'entrée').fill(title);
+    await page.getByPlaceholder('Titre de la note').fill(title);
     await page.getByRole('button', { name: 'Terminer' }).click();
 
     await expect(page).toHaveURL(/\/journal/, { timeout: 10000 });
@@ -61,6 +63,8 @@ test.describe('Journal', () => {
       (res) => res.url().includes('/api/journal/notes') && res.request().method() === 'GET',
       { timeout: 15000 }
     );
+    // Notes are compact rows: open it to get the full card
+    await page.getByRole('button', { name: `Ouvrir la note ${title}` }).click();
     const noteCard = page.getByRole('article', { name: `Entrée : ${title}` });
     await expect(noteCard).toBeVisible({ timeout: 15000 });
     await noteCard.scrollIntoViewIfNeeded();
@@ -83,7 +87,7 @@ test.describe('Journal', () => {
 
     const title = 'Entrée E2E à valider ' + Date.now();
     await page.getByRole('button', { name: 'Ajouter une note' }).click();
-    await page.getByPlaceholder('Titre de l\'entrée').fill(title);
+    await page.getByPlaceholder('Titre de la note').fill(title);
     await page.getByRole('button', { name: 'Terminer' }).click();
 
     await expect(page).toHaveURL(/\/journal/, { timeout: 10000 });
@@ -91,6 +95,8 @@ test.describe('Journal', () => {
       (res) => res.url().includes('/api/journal/notes') && res.request().method() === 'GET',
       { timeout: 15000 }
     );
+    // Notes are compact rows: open it to get the full card
+    await page.getByRole('button', { name: `Ouvrir la note ${title}` }).click();
     const noteCard = page.getByRole('article', { name: `Entrée : ${title}` });
     await expect(noteCard).toBeVisible({ timeout: 15000 });
     await noteCard.scrollIntoViewIfNeeded();
@@ -127,10 +133,12 @@ test.describe('Journal', () => {
 
     const title = 'Entrée E2E parcours ' + Date.now();
     await page.getByRole('button', { name: 'Ajouter une note' }).click();
-    await page.getByPlaceholder('Titre de l\'entrée').fill(title);
+    await page.getByPlaceholder('Titre de la note').fill(title);
     await page.getByRole('button', { name: 'Terminer' }).click();
 
     await expect(page).toHaveURL(/\/journal/, { timeout: 10000 });
+    // Notes are compact rows: open it to get the full card
+    await page.getByRole('button', { name: `Ouvrir la note ${title}` }).click();
     const noteCard = page.getByRole('article', { name: `Entrée : ${title}` });
     await expect(noteCard).toBeVisible({ timeout: 10000 });
     await noteCard.scrollIntoViewIfNeeded();

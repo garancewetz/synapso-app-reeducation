@@ -1,9 +1,6 @@
 // Components
-export { ExerciceCard } from './components/ExerciceCard';
 export { ExerciceRow } from './components/ExerciceRow';
 export { ExerciceForm } from './components/ExerciceForm';
-export { ExerciceCardHeader } from './components/ExerciceCardHeader';
-export { ExerciceCardExpandable } from './components/ExerciceCardExpandable';
 export { ExerciceCardTags } from './components/ExerciceCardTags';
 export { ExerciceMedia } from './components/ExerciceMedia';
 export { CategoryCardWithProgress } from './components/CategoryCardWithProgress';
@@ -28,7 +25,6 @@ export { useExerciceStatusFilter } from './hooks/useExerciceStatusFilter';
 export { useCategoryFilters } from './hooks/useCategoryFilters';
 export { useCategoryStats } from './hooks/useCategoryStats';
 export { usePeriodProgress } from './hooks/usePeriodProgress';
-export { useRelatedStretchingByCategory } from './hooks/useRelatedStretchingByCategory';
 export { useExerciceHandlers } from './hooks/useExerciceHandlers';
 
 // Utils

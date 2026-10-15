@@ -22,7 +22,7 @@ export default function JournalNoteAddPage() {
   };
 
   return (
-    <FormPageWrapper title="Ajouter une entrée" backHref={preserveDate('/journal')}>
+    <FormPageWrapper title="Nouvelle note" backHref={preserveDate('/journal')}>
       <JournalNoteForm onSuccess={handleSuccess} onCancel={handleCancel} />
     </FormPageWrapper>
   );
