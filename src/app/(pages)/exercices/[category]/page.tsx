@@ -16,7 +16,7 @@ import {
 import { EmptyState } from '@/app/components/EmptyState';
 import { TouchLink } from '@/app/components/TouchLink';
 import { ZoneSwitcher } from '@/app/features/exercices/components/ZoneSwitcher';
-import { estimateMinutes } from '@/app/features/seance/utils/seance.utils';
+import { estimateMinutes, planSession, SESSION_SIZE } from '@/app/features/seance/utils/seance.utils';
 import { getRelatedStretching } from '@/app/features/exercices/utils/stretching.utils';
 import type { ExerciceCategory, ExerciceStatusFilter, Exercice } from '@/app/types/exercice';
 import { CATEGORY_LABELS, CATEGORY_ORDER } from '@/app/constants/exercice.constants';
@@ -169,6 +169,8 @@ export default function CategoryPage() {
     (exercice) => !exercice.completed
   );
   const sessionPlan = [...pendingInCategory, ...pendingStretches];
+  // Same dose as the daily session: a short session gets done, 19 in a row exhaust.
+  const sessionDose = planSession(sessionPlan, SESSION_SIZE);
   // Filters only help with a long list: below this, reading beats filtering.
   const showFilters = exercices.length > FILTERS_THRESHOLD;
   const label = CATEGORY_LABELS[categoryParam];
@@ -237,13 +239,9 @@ export default function CategoryPage() {
               <span className="block text-sm text-emerald-900">
                 {[
                   label,
-                  pendingInCategory.length > 0 &&
-                    `${pendingInCategory.length} exercice${pendingInCategory.length > 1 ? 's' : ''}` +
-                      (pendingStretches.length > 0 ? ` + ${pendingStretches.length} étirement${pendingStretches.length > 1 ? 's' : ''}` : ''),
-                  pendingInCategory.length === 0 &&
-                    `${pendingStretches.length} étirement${pendingStretches.length > 1 ? 's' : ''}`,
-                  `environ ${estimateMinutes(sessionPlan)} min`,
-                ].filter(Boolean).join(' · ')}
+                  `${sessionDose.length} exercice${sessionDose.length > 1 ? 's' : ''}`,
+                  `environ ${estimateMinutes(sessionDose)} min`,
+                ].join(' · ')}
               </span>
             </span>
           </TouchLink>

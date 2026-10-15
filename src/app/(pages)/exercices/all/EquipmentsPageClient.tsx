@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import clsx from 'clsx';
 import { ExerciceRow, useExercices, useExerciceStatusFilter, useExerciceHandlers, CategoryActiveFiltersBar } from '@/app/features/exercices';
 import { TouchLink } from '@/app/components/TouchLink';
-import { estimateMinutes, filterByEquipment } from '@/app/features/seance/utils/seance.utils';
+import { estimateMinutes, filterByEquipment, planSession, SESSION_SIZE } from '@/app/features/seance/utils/seance.utils';
 import { EmptyState } from '@/app/components/EmptyState';
 import { EquipmentFilterBadge } from '@/app/components/ui';
 import { useLayoutContext } from '@/app/contexts/LayoutContext';
@@ -162,6 +162,8 @@ export function EquipmentsPageClient() {
   const sessionPlan = includeNoEquipment
     ? [...pendingWithEquipment, ...pendingNoEquipment]
     : pendingWithEquipment;
+  // Same dose as the daily session: a short session gets done, 17 in a row exhaust.
+  const sessionDose = planSession(sessionPlan, SESSION_SIZE);
   const sessionHref = preserveDate(
     `/seance?equipments=${encodeURIComponent(selectedEquipments.join(','))}${includeNoEquipment ? '&sansMateriel=1' : ''}`
   );
@@ -266,7 +268,7 @@ export function EquipmentsPageClient() {
               <span>
                 <span className="block text-lg font-semibold">Lancer la séance</span>
                 <span className="block text-sm text-emerald-900">
-                  {selectedEquipments.join(', ')}{includeNoEquipment && ' + sans matériel'} · {sessionPlan.length} exercice{sessionPlan.length > 1 ? 's' : ''} · environ {estimateMinutes(sessionPlan)} min
+                  {selectedEquipments.join(', ')}{includeNoEquipment && ' + sans matériel'} · {sessionDose.length} exercice{sessionDose.length > 1 ? 's' : ''} · environ {estimateMinutes(sessionDose)} min
                 </span>
               </span>
             </TouchLink>

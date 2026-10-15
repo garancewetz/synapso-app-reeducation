@@ -80,9 +80,10 @@ export const ExerciceRow = memo(function ExerciceRow({ exercice, onEdit, onCompl
           aria-expanded={hasDetails ? isExpanded : undefined}
           className="flex-1 min-w-0 py-2.5 text-left"
         >
-          <span className={clsx('flex items-center gap-1.5 text-base font-semibold leading-snug', isDone ? 'text-gray-400' : 'text-gray-800')}>
-            {exercice.pinned && <BookmarkIcon className="w-3.5 h-3.5 shrink-0 text-amber-500" filled />}
-            <span className="exercise-row-name truncate">{exercice.name}</span>
+          <span className={clsx('flex items-start gap-1.5 text-base font-semibold leading-snug', isDone ? 'text-gray-400' : 'text-gray-800')}>
+            {exercice.pinned && <BookmarkIcon className="w-3.5 h-3.5 mt-1 shrink-0 text-amber-500" filled />}
+            {/* Two lines rather than « … »: reading the whole name must not need a tap. */}
+            <span className="exercise-row-name line-clamp-2">{exercice.name}</span>
           </span>
           {summary && (
             <span className={clsx('block text-sm', isDone ? 'text-gray-400' : 'text-gray-600')}>{summary}</span>

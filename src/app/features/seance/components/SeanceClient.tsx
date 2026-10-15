@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { CATEGORY_LABELS, CATEGORY_ORDER } from '@/app/constants/exercice.constants';
 import type { ExerciceCategory } from '@/app/types/exercice';
 import { useUser } from '@/app/contexts/UserContext';
@@ -10,16 +10,18 @@ import { useExercices } from '@/app/features/exercices/hooks/useExercices';
 import { usePreserveDateParam } from '@/app/features/time-machine/hooks/usePreserveDateParam';
 import { CloseIcon } from '@/app/components/ui/icons';
 import { SeanceStep } from './SeanceStep';
+import { SeanceRest } from './SeanceRest';
+import { useHandPreference } from '@/app/hooks/useHandPreference';
 import { getRelatedStretching } from '@/app/features/exercices/utils/stretching.utils';
 import { useSessionSignals } from '../hooks/useSessionSignals';
-import { EXTRA_BATCH_SIZE, estimateMinutes, filterByEquipment, getTodayPlan, planSession } from '../utils/seance.utils';
+import { EXTRA_BATCH_SIZE, SESSION_SIZE, estimateMinutes, filterByEquipment, getTodayPlan, planSession } from '../utils/seance.utils';
 
 export function SeanceClient() {
   const { effectiveUser } = useUser();
   // Same query as the home (includeArchived: true) → served instantly from the
   // persisted cache; buildSessionQueue drops archived exercises.
   const { exercices: allExercices, loading, updateExercice } = useExercices({ includeArchived: true });
-  // Scoped sessions play every pending exercise of the scope (no daily dose):
+  // Scoped sessions keep the daily dose (fatigue: 5, then « Encore un peu ? »):
   // - ?category=CORE (zone page): the zone, then its related stretches —
   //   STRETCHING comes last in the body order, so planSession puts them at the end;
   // - ?equipments=Lit/Tapis[,Chaise][&sansMateriel=1] (equipment page).
@@ -50,6 +52,11 @@ export function SeanceClient() {
   const preserveDate = usePreserveDateParam();
   const homeHref = preserveDate('/');
   const { unlockAudio, signalEnd } = useSessionSignals();
+  const { isLeftHanded } = useHandPreference();
+  const router = useRouter();
+  // « J'arrête là »: stopping early is a valid ending, not a failure.
+  const [stopped, setStopped] = useState(false);
+  const [resting, setResting] = useState(false);
 
   // Snapshot of the session order, taken once: completing an exercise must not
   // reshuffle what comes next. `target` = how many exercises the session aims
@@ -72,7 +79,7 @@ export function SeanceClient() {
   useEffect(() => {
     if (!effectiveUser || loading || target !== null) return;
     if (scopeLabel) {
-      setTarget(Math.max(1, exercices.filter((exercice) => !exercice.archived && !exercice.completed).length));
+      setTarget(Math.max(1, Math.min(SESSION_SIZE, exercices.filter((exercice) => !exercice.archived && !exercice.completed).length)));
       return;
     }
     const { remainingToday } = getTodayPlan(exercices);
@@ -106,7 +113,13 @@ export function SeanceClient() {
     () => (queue ?? []).filter((id) => byId.get(id) && !byId.get(id)?.archived),
     [queue, byId]
   );
-  const current = position < steps.length ? byId.get(steps[position]) : undefined;
+  const current = !stopped && position < steps.length ? byId.get(steps[position]) : undefined;
+
+  // Mid-session with something done: show « C'est déjà bien ». Otherwise just leave.
+  const stop = () => {
+    if (current && doneCount > 0) setStopped(true);
+    else router.push(homeHref);
+  };
 
   const next = () => {
     setPosition((p) => p + 1);
@@ -139,16 +152,17 @@ export function SeanceClient() {
   return (
     <div className="min-h-dvh max-w-xl mx-auto px-4 pt-[max(1rem,env(safe-area-inset-top))]">
       <div className="flex items-center gap-3 py-3">
-        <Link
-          href={homeHref}
-          aria-label="Quitter la séance"
+        <button
+          type="button"
+          onClick={stop}
+          aria-label="Arrêter la séance"
           className="min-h-[48px] min-w-[48px] flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-700"
         >
           <CloseIcon className="w-5 h-5" />
-        </Link>
+        </button>
         {current && (
           <div className="flex-1">
-            <p className="text-sm font-medium text-slate-600">
+            <p className="text-sm font-medium text-slate-700">
               {scopeLabel && `${scopeLabel} · `}Exercice {position + 1} sur {steps.length}
             </p>
             <div className="mt-1 h-2 rounded-full bg-slate-200 overflow-hidden" aria-hidden="true">
@@ -159,6 +173,15 @@ export function SeanceClient() {
             </div>
           </div>
         )}
+        {current && position > 0 && (
+          <button
+            type="button"
+            onClick={() => setResting(true)}
+            className="min-h-[48px] px-3 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold"
+          >
+            🌿 Souffler
+          </button>
+        )}
       </div>
 
       {queue === null || !effectiveUser ? (
@@ -168,6 +191,7 @@ export function SeanceClient() {
           key={current.id}
           exercice={current}
           userId={effectiveUser.id}
+          isLeftHanded={isLeftHanded}
           onDone={handleDone}
           onSkip={handleSkip}
           onCompleted={updateExercice}
@@ -178,16 +202,20 @@ export function SeanceClient() {
         <section className="py-12 text-center space-y-4">
           {/* Three endings: done some (bravo), skipped everything (no guilt, resume
               later), nothing was left to do. */}
-          <p className="text-6xl" aria-hidden="true">{doneCount > 0 ? '🎉' : skipped.length > 0 ? '🌿' : '✨'}</p>
+          <p className="text-6xl" aria-hidden="true">{stopped ? '🌿' : doneCount > 0 ? '🎉' : skipped.length > 0 ? '🌿' : '✨'}</p>
           <h1 className="text-3xl font-bold text-slate-900">
-            {doneCount > 0
+            {stopped
+              ? 'C’est déjà bien\u00a0!'
+              : doneCount > 0
               ? 'Séance terminée, bravo\u00a0!'
               : skipped.length > 0
                 ? 'Pas de souci'
                 : 'Tout est déjà fait'}
           </h1>
           <p className="text-lg text-slate-600">
-            {doneCount > 0
+            {stopped
+              ? `${doneCount} exercice${doneCount > 1 ? 's' : ''} fait${doneCount > 1 ? 's' : ''}. Le reste attendra, écoute ta fatigue.`
+              : doneCount > 0
               ? `${doneCount} exercice${doneCount > 1 ? 's' : ''} fait${doneCount > 1 ? 's' : ''}.`
               : skipped.length > 0
                 ? 'Tu peux reprendre les exercices passés maintenant, ou plus tard.'
@@ -202,7 +230,7 @@ export function SeanceClient() {
             >
               {doneCount > 0 ? 'Terminer pour aujourd’hui' : 'Retour à l’accueil'}
             </Link>
-            {skipped.length > 0 && (
+            {!stopped && skipped.length > 0 && (
               <button
                 type="button"
                 onClick={resumeSkipped}
@@ -211,7 +239,7 @@ export function SeanceClient() {
                 Reprendre {skipped.length > 1 ? `les ${skipped.length} exercices passés` : 'l’exercice passé'}
               </button>
             )}
-            {extraBatch.length > 0 && (
+            {!stopped && extraBatch.length > 0 && (
               <button
                 type="button"
                 onClick={doMore}
@@ -223,6 +251,7 @@ export function SeanceClient() {
           </div>
         </section>
       )}
+      {resting && <SeanceRest onClose={() => setResting(false)} signalEnd={signalEnd} />}
     </div>
   );
 }
