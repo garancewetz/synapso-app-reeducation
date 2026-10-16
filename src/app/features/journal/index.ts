@@ -2,7 +2,6 @@
 export { JournalNoteForm } from './components/JournalNoteForm';
 export { JournalNoteCard } from './components/JournalNoteCard';
 export { JournalNotesList } from './components/JournalNotesList';
-export { JournalSectionHeader } from './components/JournalSectionHeader';
 
 // Hooks
 export { useJournalForm } from './hooks/useJournalForm';
