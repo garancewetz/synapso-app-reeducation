@@ -16,7 +16,8 @@ import {
 import { EmptyState } from '@/app/components/EmptyState';
 import { TouchLink } from '@/app/components/TouchLink';
 import { ZoneSwitcher } from '@/app/features/exercices/components/ZoneSwitcher';
-import { estimateMinutes, planSession, SESSION_SIZE } from '@/app/features/seance/utils/seance.utils';
+import { planSession, SESSION_SIZE } from '@/app/features/seance/utils/seance.utils';
+import { SeanceLaunchLink } from '@/app/features/seance';
 import { getRelatedStretching } from '@/app/features/exercices/utils/stretching.utils';
 import type { ExerciceCategory, ExerciceStatusFilter, Exercice } from '@/app/types/exercice';
 import { CATEGORY_LABELS, CATEGORY_ORDER } from '@/app/constants/exercice.constants';
@@ -229,22 +230,12 @@ export default function CategoryPage() {
 
         {/* Bridge to the session: do this zone now, with the timer. */}
         {!loadingExercices && sessionPlan.length > 0 && (
-          <TouchLink
+          <SeanceLaunchLink
             href={preserveDate(`/seance?category=${categoryParam}`)}
-            className="mt-4 flex items-center gap-4 rounded-2xl bg-emerald-500 px-5 py-3.5 text-emerald-950! shadow-md active:scale-[0.98] transition-transform"
-          >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/30 text-xl" aria-hidden="true">▶</span>
-            <span>
-              <span className="block text-lg font-semibold">Lancer la séance</span>
-              <span className="block text-sm text-emerald-900">
-                {[
-                  label,
-                  `${sessionDose.length} exercice${sessionDose.length > 1 ? 's' : ''}`,
-                  `environ ${estimateMinutes(sessionDose)} min`,
-                ].join(' · ')}
-              </span>
-            </span>
-          </TouchLink>
+            scopeLabel={label}
+            plan={sessionDose}
+            className="mt-4"
+          />
         )}
 
 

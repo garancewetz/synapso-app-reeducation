@@ -6,7 +6,8 @@ import dynamic from 'next/dynamic';
 import clsx from 'clsx';
 import { ExerciceRow, useExercices, useExerciceStatusFilter, useExerciceHandlers, CategoryActiveFiltersBar } from '@/app/features/exercices';
 import { TouchLink } from '@/app/components/TouchLink';
-import { estimateMinutes, filterByEquipment, planSession, SESSION_SIZE } from '@/app/features/seance/utils/seance.utils';
+import { filterByEquipment, planSession, SESSION_SIZE } from '@/app/features/seance/utils/seance.utils';
+import { SeanceLaunchLink } from '@/app/features/seance';
 import { EmptyState } from '@/app/components/EmptyState';
 import { EquipmentFilterBadge } from '@/app/components/ui';
 import { useLayoutContext } from '@/app/contexts/LayoutContext';
@@ -260,18 +261,11 @@ export function EquipmentsPageClient() {
         {/* "Je suis sur mon tapis" : faire tout ce qui se fait avec ce matériel. */}
         {selectedEquipments.length > 0 && pendingWithEquipment.length + (includeNoEquipment ? pendingNoEquipment.length : 0) > 0 && (
           <div className="mb-6 space-y-2">
-            <TouchLink
+            <SeanceLaunchLink
               href={sessionHref}
-              className="flex items-center gap-4 rounded-2xl bg-emerald-500 px-5 py-3.5 text-emerald-950! shadow-md active:scale-[0.98] transition-transform"
-            >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/30 text-xl" aria-hidden="true">▶</span>
-              <span>
-                <span className="block text-lg font-semibold">Lancer la séance</span>
-                <span className="block text-sm text-emerald-900">
-                  {selectedEquipments.join(', ')}{includeNoEquipment && ' + sans matériel'} · {sessionDose.length} exercice{sessionDose.length > 1 ? 's' : ''} · environ {estimateMinutes(sessionDose)} min
-                </span>
-              </span>
-            </TouchLink>
+              scopeLabel={selectedEquipments.join(', ') + (includeNoEquipment ? ' + sans matériel' : '')}
+              plan={sessionDose}
+            />
             {pendingNoEquipment.length > 0 && (
               <label className="flex items-center gap-3 min-h-[44px] px-1 text-base text-gray-700">
                 <input
