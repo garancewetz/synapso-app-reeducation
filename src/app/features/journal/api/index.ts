@@ -4,4 +4,3 @@ export { getJournalNoteById } from './getJournalNoteById';
 export { updateJournalNote } from './updateJournalNote';
 export { deleteJournalNote } from './deleteJournalNote';
 export { pinJournalNote } from './pinJournalNote';
-export { validateJournalNote } from './validateJournalNote';

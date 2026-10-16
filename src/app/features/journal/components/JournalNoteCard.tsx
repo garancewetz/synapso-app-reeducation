@@ -1,50 +1,31 @@
 'use client';
 
 import { useState, memo, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import { format } from 'date-fns';
 import type { JournalNote } from '@/app/types';
 import type { MediaItem } from '@/app/types/exercice';
-import type { LinkedExercice } from '@/app/types/journal';
 import { useUser } from '@/app/contexts/UserContext';
-import { useTimeContext } from '@/app/contexts/TimeContext';
 import { usePinJournalNote } from '../hooks/usePinJournalNote';
-import { useValidateJournalNote } from '../hooks/useValidateJournalNote';
 import { useShareJournalNote } from '../hooks/useShareJournalNote';
-import { Button, BorderedIconList, CardActionButton, CardActionsPanel, InlineSpinner } from '@/app/components/ui';
+import { Button, CardActionButton, CardActionsPanel, InlineSpinner } from '@/app/components/ui';
 import { MediaUploader } from '@/app/components/ui';
-import { ExercicePickerModal } from './ExercicePickerModal';
-import { DotsIcon, BookmarkIcon, ShareIcon, CameraIcon, CheckIcon } from '@/app/components/ui/icons';
+import { DotsIcon, BookmarkIcon, ShareIcon, CameraIcon } from '@/app/components/ui/icons';
 import { TrashIcon } from '@/app/components/ui/icons/TrashIcon';
-import { CATEGORY_HREFS, CATEGORY_COLORS, CATEGORY_ICONS } from '@/app/constants/exercice.constants';
 import { JOURNAL_NOTE_STYLES } from '@/app/constants/journal.constants';
 import clsx from 'clsx';
 
 type Props = {
   note: JournalNote;
-  completedExerciceIds?: Set<number>;
   onUpdated?: (updatedNote?: JournalNote) => void;
 };
 
 export const JournalNoteCard = memo(function JournalNoteCard({
   note,
-  completedExerciceIds,
   onUpdated,
 }: Props) {
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [title, setTitle] = useState(note.title);
   const [description, setDescription] = useState(note.description ?? '');
   const [media, setMedia] = useState<MediaItem[]>(Array.isArray(note.media) ? (note.media as MediaItem[]) : []);
-  const [exerciceIds, setExerciceIds] = useState<number[]>(note.exercices ? note.exercices.map((e) => e.id) : []);
-  const [exerciceNames, setExerciceNames] = useState<LinkedExercice[]>(
-    note.exercices
-      ? note.exercices.map((e) => ({
-          id: e.id,
-          name: e.name,
-          category: e.category,
-        }))
-      : []
-  );
-  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [showMediaUploader, setShowMediaUploader] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
@@ -55,8 +36,6 @@ export const JournalNoteCard = memo(function JournalNoteCard({
   const cardRef = useRef<HTMLElement | null>(null);
   const skipNextNoteResetRef = useRef(false);
   const { effectiveUser } = useUser();
-  const { referenceDateKey } = useTimeContext();
-  const targetDateKey = referenceDateKey ?? format(new Date(), 'yyyy-MM-dd');
 
   const { handlePin, isPinning } = usePinJournalNote({
     note,
@@ -65,22 +44,6 @@ export const JournalNoteCard = memo(function JournalNoteCard({
   });
 
   const { handleShare } = useShareJournalNote(note);
-
-  const { handleValidateOrUnvalidate, isValidating, isValidatedForReferenceDay } = useValidateJournalNote({
-    note,
-    userId: effectiveUser?.id ?? 0,
-    targetDateKey,
-    resetFrequency: effectiveUser?.resetFrequency ?? 'DAILY',
-    onCompleted: onUpdated,
-  });
-
-  const hasExercices = note.exercices && note.exercices.length > 0;
-  const validateActionLabel = isValidatedForReferenceDay ? 'Validée' : 'Valider';
-  const validateAriaLabel = isValidatedForReferenceDay
-    ? "Annuler la validation pour aujourd'hui"
-    : hasExercices
-      ? `Valider pour aujourd'hui et marquer les ${note.exercices?.length ?? 0} exercice(s) comme faits`
-      : "Valider pour aujourd'hui";
 
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTitle(e.target.value);
@@ -114,21 +77,12 @@ export const JournalNoteCard = memo(function JournalNoteCard({
     setHasUnsavedChanges(true);
   }, []);
 
-  const handleExerciceChange = useCallback((selected: LinkedExercice[]) => {
-    setExerciceIds(selected.map((e) => e.id));
-    setExerciceNames(selected);
-    setHasUnsavedChanges(true);
-  }, []);
 
   const handleAddMediaClick = useCallback(() => {
     setShowMediaUploader(true);
     setIsActionsOpen(false);
   }, []);
 
-  const handleLinkExercicesClick = useCallback(() => {
-    setIsPickerOpen(true);
-    setIsActionsOpen(false);
-  }, []);
 
   const handlePinClick = useCallback(async () => {
     await handlePin();
@@ -213,16 +167,6 @@ export const JournalNoteCard = memo(function JournalNoteCard({
     setTitle(note.title);
     setDescription(note.description ?? '');
     setMedia(Array.isArray(note.media) ? (note.media as MediaItem[]) : []);
-    setExerciceIds(note.exercices ? note.exercices.map((e) => e.id) : []);
-    setExerciceNames(
-      note.exercices
-        ? note.exercices.map((e) => ({
-            id: e.id,
-            name: e.name,
-            category: e.category,
-          }))
-        : []
-    );
     setHasUnsavedChanges(false);
     setHasAutoSavedOnce(false);
     setShowMediaUploader((prev) => prev || (Array.isArray(note.media) && (note.media as MediaItem[]).length > 0));
@@ -236,8 +180,7 @@ export const JournalNoteCard = memo(function JournalNoteCard({
     const isEmpty =
       !title.trim() &&
       !description.trim() &&
-      media.length === 0 &&
-      exerciceIds.length === 0;
+      media.length === 0;
 
     setIsAutoSaving(true);
 
@@ -270,7 +213,6 @@ export const JournalNoteCard = memo(function JournalNoteCard({
             title: title.trim(),
             description,
             media,
-            exerciceIds,
           }),
         });
 
@@ -289,7 +231,7 @@ export const JournalNoteCard = memo(function JournalNoteCard({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [description, exerciceIds, hasUnsavedChanges, media, note.id, onUpdated, title]);
+  }, [description, hasUnsavedChanges, media, note.id, onUpdated, title]);
 
   return (
     <>
@@ -316,9 +258,6 @@ export const JournalNoteCard = memo(function JournalNoteCard({
                 {note.pinned && (
                   <BookmarkIcon className="w-4 h-4 text-amber-500" filled />
                 )}
-                {isValidatedForReferenceDay && (
-                  <CheckIcon className="w-5 h-5 text-emerald-500 shrink-0" aria-hidden />
-                )}
               </div>
             </div>
 
@@ -341,27 +280,6 @@ export const JournalNoteCard = memo(function JournalNoteCard({
                 />
               </div>
             )}
-            {exerciceNames.length > 0 && (
-              <div className="mt-3">
-                <BorderedIconList
-                  title="Exercices liés"
-                  ariaLabel="Exercices liés à cette note"
-                  items={exerciceNames.map((ex) => {
-                    const baseHref = CATEGORY_HREFS[ex.category as keyof typeof CATEGORY_HREFS];
-                    const href = `${baseHref}#exercice-${ex.id}`;
-                    const colors = CATEGORY_COLORS[ex.category as keyof typeof CATEGORY_COLORS];
-                    return {
-                      key: ex.id,
-                      label: ex.name,
-                      icon: CATEGORY_ICONS[ex.category as keyof typeof CATEGORY_ICONS],
-                      borderClass: colors?.border || 'border-gray-200',
-                      href,
-                      completed: completedExerciceIds?.has(ex.id) ?? false,
-                    };
-                  })}
-                />
-              </div>
-            )}
             <div className={clsx('mt-3 flex flex-wrap items-center gap-x-3 gap-y-1', JOURNAL_NOTE_STYLES.meta)}>
               {note.date && (
                 <span>
@@ -378,24 +296,7 @@ export const JournalNoteCard = memo(function JournalNoteCard({
           </div>
 
           <div onClick={(e) => e.stopPropagation()}>
-            <div className={clsx(JOURNAL_NOTE_STYLES.footer, 'gap-2')}>
-              <Button
-                type="button"
-                variant={isValidatedForReferenceDay ? 'success' : 'secondary'}
-                size="sm"
-                rounded="lg"
-                icon={isValidating ? undefined : <CheckIcon className="w-4 h-4" />}
-                disabled={isValidating}
-                aria-label={validateAriaLabel}
-                onClick={() => void handleValidateOrUnvalidate()}
-                className="flex-1 min-w-0 order-1"
-              >
-                {isValidating ? (
-                  <InlineSpinner color="emerald" size="sm" />
-                ) : (
-                  validateActionLabel
-                )}
-              </Button>
+            <div className={clsx(JOURNAL_NOTE_STYLES.footer, 'gap-2 justify-end')}>
               <div className="flex items-center gap-1 order-2">
                 <Button
                   iconOnly
@@ -416,14 +317,7 @@ export const JournalNoteCard = memo(function JournalNoteCard({
                     label={media.length > 0 ? 'Modifier l\'image' : 'Ajouter une image'}
                     onClick={handleAddMediaClick}
                     color="neutral"
-                    className={clsx('border-r border-b', JOURNAL_NOTE_STYLES.actionsBorder)}
-                  />
-                  <CardActionButton
-                    icon={<CheckIcon className="w-5 h-5" />}
-                    label={exerciceIds.length > 0 ? 'Modifier les exercices' : 'Lier des exercices'}
-                    onClick={handleLinkExercicesClick}
-                    color="neutral"
-                    className={clsx('border-b', JOURNAL_NOTE_STYLES.actionsBorder)}
+                    className={clsx('border-r', JOURNAL_NOTE_STYLES.actionsBorder)}
                   />
                   <CardActionButton
                     icon={isPinning
@@ -434,13 +328,13 @@ export const JournalNoteCard = memo(function JournalNoteCard({
                     onClick={handlePinClick}
                     disabled={isPinning}
                     color="neutral"
-                    className={clsx('border-r', JOURNAL_NOTE_STYLES.actionsBorder)}
                   />
                   <CardActionButton
                     icon={<ShareIcon className="w-5 h-5" />}
                     label="Partager"
                     onClick={handleShare}
                     color="neutral"
+                    className={clsx('col-span-2 border-t', JOURNAL_NOTE_STYLES.actionsBorder)}
                   />
                   <CardActionButton
                     icon={isDeleting
@@ -461,12 +355,6 @@ export const JournalNoteCard = memo(function JournalNoteCard({
           </div>
         </div>
       </article>
-      <ExercicePickerModal
-        isOpen={isPickerOpen}
-        onClose={() => setIsPickerOpen(false)}
-        value={exerciceIds}
-        onChange={handleExerciceChange}
-      />
     </>
   );
 });
