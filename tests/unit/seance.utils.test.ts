@@ -255,4 +255,24 @@ describe('sortForFlow', () => {
     ]);
     expect(plan.map((e) => e.id)).toEqual([2, 1, 3]);
   });
+
+  it('keeps each equipment together: no elastic → table → elastic again', () => {
+    const plan = sortForFlow([
+      make(1, 'Debout', { equipments: ['Élastique'] }),
+      make(2, 'Main à plat sur la table', { equipments: ['Table'] }),
+      make(3, 'Assise', { equipments: ['Élastique'] }),
+      make(4, 'Allongée', { category: 'STRETCHING', equipments: ['Élastique'] }),
+    ]);
+    expect(plan.map((e) => e.id)).toEqual([3, 1, 4, 2]);
+  });
+
+  it('puts a multi-equipment exercise with the most used equipment', () => {
+    const plan = sortForFlow([
+      make(1, 'Assise', { equipments: ['Table'] }),
+      make(2, 'Allongée', { equipments: ['Lit/Tapis'] }),
+      make(3, 'Assise', { equipments: ['Table', 'Lit/Tapis'] }),
+      make(4, 'Assise', { equipments: ['Table'] }),
+    ]);
+    expect(plan.map((e) => e.id)).toEqual([2, 1, 3, 4]);
+  });
 });
