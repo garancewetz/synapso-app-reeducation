@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 import { ExerciceRow } from '@/app/features/exercices';
 import { PinnedNoteRow, PinnedProgressRow } from './HomePinnedRows';
 import { BookmarkIcon } from '@/app/components/ui/icons';
@@ -14,7 +14,6 @@ type Props = {
   onEditProgress?: (progress: Progress) => void;
   onCompleted?: (updatedExercice: Exercice) => void;
   onArchive?: (updatedExercice: Exercice) => void;
-  onNoteUpdated?: () => void;
 };
 
 export const HomePinnedTab = memo(function HomePinnedTab({
@@ -25,14 +24,7 @@ export const HomePinnedTab = memo(function HomePinnedTab({
   onEditProgress,
   onCompleted,
   onArchive,
-  onNoteUpdated,
 }: Props) {
-  const handleNoteUpdated = useCallback(() => {
-    if (onNoteUpdated) {
-      onNoteUpdated();
-    }
-  }, [onNoteUpdated]);
-
   const isEmpty = pinnedExercices.length === 0 && pinnedProgress.length === 0 && pinnedNotes.length === 0;
 
   if (isEmpty) {
@@ -88,7 +80,7 @@ export const HomePinnedTab = memo(function HomePinnedTab({
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {pinnedNotes.map(note => (
-              <PinnedNoteRow key={`note-${note.id}`} note={note} onUpdated={handleNoteUpdated} />
+              <PinnedNoteRow key={`note-${note.id}`} note={note} />
             ))}
           </div>
         </section>

@@ -3,13 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ErrorMessage, FormActions } from '@/app/components';
 import { Input, Textarea, MediaUploader } from '@/app/components/ui';
-import { Button } from '@/app/components/ui/Button';
 import { useJournalForm } from '../hooks/useJournalForm';
 import { useFormData } from '@/app/hooks/forms/useFormData';
-import { ExercicePickerModal } from './ExercicePickerModal';
-import { CATEGORY_COLORS } from '@/app/constants/exercice.constants';
-import type { MediaItem, ExerciceCategory } from '@/app/types/exercice';
-import type { LinkedExercice } from '@/app/types/journal';
+import type { MediaItem } from '@/app/types/exercice';
 
 type NoteFormData = {
   title: string;
@@ -18,7 +14,6 @@ type NoteFormData = {
 
 type InitialNoteData = NoteFormData & {
   media?: MediaItem[];
-  exercices?: LinkedExercice[];
 };
 
 type Props = {
@@ -33,9 +28,6 @@ export function JournalNoteForm({ noteId, onSuccess, onCancel }: Props) {
     description: '',
   });
   const [media, setMedia] = useState<MediaItem[]>([]);
-  const [exerciceIds, setExerciceIds] = useState<number[]>([]);
-  const [exerciceNames, setExerciceNames] = useState<LinkedExercice[]>([]);
-  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [hasAutoSavedOnce, setHasAutoSavedOnce] = useState(false);
@@ -51,13 +43,11 @@ export function JournalNoteForm({ noteId, onSuccess, onCancel }: Props) {
         title?: string;
         description?: string;
         media?: MediaItem[] | null;
-        exercices?: LinkedExercice[] | null;
       };
       return {
         title: noteData.title || '',
         description: noteData.description || '',
         media: noteData.media || [],
-        exercices: noteData.exercices || [],
       };
     },
   });
@@ -78,7 +68,6 @@ export function JournalNoteForm({ noteId, onSuccess, onCancel }: Props) {
       title: data.title,
       description: data.description,
       media,
-      exerciceIds,
     }),
   });
 
@@ -87,10 +76,6 @@ export function JournalNoteForm({ noteId, onSuccess, onCancel }: Props) {
       setFormData({ title: initialData.title, description: initialData.description });
       if (initialData.media) {
         setMedia(initialData.media);
-      }
-      if (initialData.exercices) {
-        setExerciceIds(initialData.exercices.map((e) => e.id));
-        setExerciceNames(initialData.exercices);
       }
     }
   }, [initialData]);
@@ -107,18 +92,6 @@ export function JournalNoteForm({ noteId, onSuccess, onCancel }: Props) {
 
   const handleMediaChange = useCallback((items: MediaItem[]) => {
     setMedia(items);
-    setHasUnsavedChanges(true);
-  }, []);
-
-  const handleExerciceChange = useCallback((selected: LinkedExercice[]) => {
-    setExerciceIds(selected.map((e) => e.id));
-    setExerciceNames(selected);
-    setHasUnsavedChanges(true);
-  }, []);
-
-  const removeExercice = useCallback((id: number) => {
-    setExerciceIds((prev) => prev.filter((eid) => eid !== id));
-    setExerciceNames((prev) => prev.filter((e) => e.id !== id));
     setHasUnsavedChanges(true);
   }, []);
 
@@ -205,46 +178,6 @@ export function JournalNoteForm({ noteId, onSuccess, onCancel }: Props) {
           multiple={false}
         />
 
-        {/* Exercices liés */}
-        <div>
-          <p className="text-xs text-gray-500 text-center mb-2">Exercices liés (optionnel)</p>
-
-          {exerciceNames.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              {exerciceNames.map((ex) => {
-                const colors = CATEGORY_COLORS[ex.category as ExerciceCategory];
-                return (
-                  <span
-                    key={ex.id}
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${colors?.tag || 'bg-gray-100 text-gray-600'}`}
-                  >
-                    {ex.name}
-                    <button
-                      type="button"
-                      onClick={() => removeExercice(ex.id)}
-                      className="ml-0.5 hover:opacity-70"
-                      aria-label={`Retirer ${ex.name}`}
-                    >
-                      ✕
-                    </button>
-                  </span>
-                );
-              })}
-            </div>
-          )}
-
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            rounded="lg"
-            onClick={() => setIsPickerOpen(true)}
-            className="w-full"
-          >
-            {exerciceIds.length > 0 ? 'Modifier les exercices liés' : 'Lier des exercices'}
-          </Button>
-        </div>
-
         <FormActions
           loading={loading || loadingInitial}
           onCancel={onCancel}
@@ -260,12 +193,6 @@ export function JournalNoteForm({ noteId, onSuccess, onCancel }: Props) {
         {autosaveMessage && <p>{autosaveMessage}</p>}
       </form>
 
-      <ExercicePickerModal
-        isOpen={isPickerOpen}
-        onClose={() => setIsPickerOpen(false)}
-        value={exerciceIds}
-        onChange={handleExerciceChange}
-      />
     </>
   );
 }

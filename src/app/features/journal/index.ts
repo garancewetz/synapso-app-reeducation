@@ -8,5 +8,4 @@ export { JournalSectionHeader } from './components/JournalSectionHeader';
 export { useJournalForm } from './hooks/useJournalForm';
 export { useJournalNotes } from './hooks/useJournalNotes';
 export { usePinJournalNote } from './hooks/usePinJournalNote';
-export { useValidateJournalNote } from './hooks/useValidateJournalNote';
 export { useShareJournalNote } from './hooks/useShareJournalNote';

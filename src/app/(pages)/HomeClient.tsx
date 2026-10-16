@@ -33,7 +33,7 @@ export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps
 
   const { exercices, updateExercice } = useExercices({ includeArchived: true });
   const { progressList } = useProgress();
-  const { notes: journalNotes, refetch: refetchNotes } = useJournalNotes();
+  const { notes: journalNotes } = useJournalNotes();
   const pinnedExercices = useMemo(() => exercices.filter(e => !e.archived && e.pinned), [exercices]);
   const pinnedProgress = useMemo(() => progressList.filter(p => p.pinned), [progressList]);
   const pinnedNotes = useMemo(() => journalNotes.filter(n => n.pinned), [journalNotes]);
@@ -128,7 +128,6 @@ export function HomeClient({ exercicesSlot, welcomeHeaderSlot }: HomeClientProps
                       onEditProgress={progressModal.openForEdit}
                       onCompleted={handlePinnedUpdate}
                       onArchive={handlePinnedUpdate}
-                      onNoteUpdated={refetchNotes}
                     />
                   </section>
                 )}

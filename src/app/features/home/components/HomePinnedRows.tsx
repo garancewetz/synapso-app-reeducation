@@ -4,11 +4,7 @@ import clsx from 'clsx';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { TouchLink } from '@/app/components/TouchLink';
-import { CheckIcon, ChevronIcon } from '@/app/components/ui/icons';
-import { InlineSpinner } from '@/app/components/ui';
-import { useUser } from '@/app/contexts/UserContext';
-import { useTimeContext } from '@/app/contexts/TimeContext';
-import { useValidateJournalNote } from '@/app/features/journal';
+import { ChevronIcon } from '@/app/components/ui/icons';
 import type { JournalNote } from '@/app/types/journal';
 import type { Progress } from '@/app/types/progress';
 
@@ -16,32 +12,19 @@ const rowClass = 'relative flex items-center gap-3 min-h-[64px] rounded-xl borde
 
 type NoteRowProps = {
   note: JournalNote;
-  onUpdated?: () => void;
   /** Open in place (journal list) instead of navigating to the edit page. */
   onOpen?: () => void;
 };
 
-/** Pinned note as one line: tap to open it, round check to validate it for today. */
-export function PinnedNoteRow({ note, onUpdated, onOpen }: NoteRowProps) {
-  const { effectiveUser } = useUser();
-  const { referenceDateKey } = useTimeContext();
-  const { handleValidateOrUnvalidate, isValidating, isValidatedForReferenceDay } = useValidateJournalNote({
-    note,
-    userId: effectiveUser?.id ?? 0,
-    targetDateKey: referenceDateKey,
-    resetFrequency: effectiveUser?.resetFrequency,
-    onCompleted: onUpdated,
-  });
-  const linked = note.exercices?.length ?? 0;
-  const subtitle = linked > 0
-    ? `${linked} exercice${linked > 1 ? 's' : ''} lié${linked > 1 ? 's' : ''}`
-    : note.description?.split('\n')[0];
+/** Pinned note as one line: a reminder, tap to open it. */
+export function PinnedNoteRow({ note, onOpen }: NoteRowProps) {
+  const subtitle = note.description?.split('\n')[0];
 
   const body = (
     <>
       <span className="text-xl shrink-0" aria-hidden="true">📝</span>
       <span className="min-w-0">
-        <span className={clsx('block truncate text-base font-semibold', isValidatedForReferenceDay ? 'text-gray-400' : 'text-gray-800')}>
+        <span className="block truncate text-base font-semibold text-gray-800">
           {note.title || 'Note sans titre'}
         </span>
         {subtitle && <span className="block truncate text-sm text-gray-500">{subtitle}</span>}
@@ -60,23 +43,7 @@ export function PinnedNoteRow({ note, onUpdated, onOpen }: NoteRowProps) {
           {body}
         </TouchLink>
       )}
-      <button
-        type="button"
-        onClick={handleValidateOrUnvalidate}
-        disabled={isValidating}
-        aria-pressed={isValidatedForReferenceDay}
-        aria-label={isValidatedForReferenceDay ? `Annuler la validation de ${note.title}` : `Valider ${note.title} pour aujourd'hui`}
-        className="flex items-center justify-center w-12 h-12 rounded-full active:scale-95 transition-transform"
-      >
-        <span
-          className={clsx(
-            'flex items-center justify-center w-8 h-8 rounded-full border-2 transition-colors',
-            isValidatedForReferenceDay ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-gray-300 text-transparent'
-          )}
-        >
-          {isValidating ? <InlineSpinner /> : <CheckIcon className="w-4 h-4" />}
-        </span>
-      </button>
+      <ChevronIcon direction="right" className="w-4 h-4 mr-1.5 text-gray-300 shrink-0" />
     </div>
   );
 }
