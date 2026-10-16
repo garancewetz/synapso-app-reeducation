@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CATEGORY_LABELS, CATEGORY_ORDER } from '@/app/constants/exercice.constants';
 import type { ExerciceCategory } from '@/app/types/exercice';
@@ -15,6 +16,13 @@ import { useHandPreference } from '@/app/hooks/useHandPreference';
 import { getRelatedStretching } from '@/app/features/exercices/utils/stretching.utils';
 import { useSessionSignals } from '../hooks/useSessionSignals';
 import { EXTRA_BATCH_SIZE, SESSION_SIZE, estimateMinutes, filterByEquipment, getTodayPlan, planSession } from '../utils/seance.utils';
+
+const ConfettiRain = dynamic(
+  () => import('@/app/features/exercices/components/ConfettiRain').then((mod) => ({ default: mod.ConfettiRain })),
+  { ssr: false, loading: () => null }
+);
+
+const CELEBRATION_EMOJIS = ['🎉', '🎊', '⭐', '💪', '🌟', '✨'];
 
 export function SeanceClient() {
   const { effectiveUser } = useUser();
@@ -200,6 +208,10 @@ export function SeanceClient() {
         />
       ) : (
         <section className="py-12 text-center space-y-4">
+          {/* A finished session deserves the confetti; stopping early stays calm. */}
+          {doneCount > 0 && !stopped && (
+            <ConfettiRain show fromWindow emojiCount={7} confettiCount={40} emojis={CELEBRATION_EMOJIS} />
+          )}
           {/* Three endings: done some (bravo), skipped everything (no guilt, resume
               later), nothing was left to do. */}
           <p className="text-6xl" aria-hidden="true">{stopped ? '🌿' : doneCount > 0 ? '🎉' : skipped.length > 0 ? '🌿' : '✨'}</p>
