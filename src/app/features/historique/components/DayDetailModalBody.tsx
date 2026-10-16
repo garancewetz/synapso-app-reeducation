@@ -3,7 +3,7 @@ import type { Progress } from '@/app/types';
 import type { ExerciceCategory } from '@/app/types/exercice';
 import { CATEGORY_ICONS, CATEGORY_COLORS, CATEGORY_ORDER, CATEGORY_LABELS_SHORT } from '@/app/constants/exercice.constants';
 import { PROGRESS_EMOJIS, NAVIGATION_EMOJIS } from '@/app/constants/emoji.constants';
-import { formatTime, formatShortDate } from '@/app/utils/date.utils';
+import { formatTime } from '@/app/utils/date.utils';
 import { Button, BorderedIconList } from '@/app/components/ui';
 import { MAX_TIME_MACHINE_DAYS } from '@/app/constants/historique.constants';
 import { useTimeContext } from '@/app/contexts/TimeContext';
@@ -35,7 +35,6 @@ export function DayDetailModalBody({
   onReturnToToday,
 }: Props) {
   const { isTimeMachineMode } = useTimeContext();
-  const formattedDate = date ? formatShortDate(date) : '';
   const isPastDay = date ? !isToday(date) : false;
   const isCurrentDay = date ? isToday(date) : false;
   const isFutureDay = date ? isAfter(startOfDay(date), startOfDay(new Date())) : false;
