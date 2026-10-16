@@ -124,22 +124,43 @@ export function getBodyPosition(exercice: Exercice): BodyPosition {
 const POSITION_ORDER: BodyPosition[] = ['lying', 'seated', 'standing'];
 
 /**
- * Session order that spares energy: lying first, then seated, then standing (one
- * way up, never down again), grouped by equipment so it is set up once, then the
- * usual body order. Stretches stay at the end as a cool-down. Stable: on ties the
- * planned order (pinned, most overdue) is kept.
+ * Session order that spares energy. Equipment first: each piece of equipment is
+ * set up once and its exercises follow each other (no elastic → table → elastic
+ * again). Groups go lying → seated → standing (one way up, never down again);
+ * within a group, stretches come last as a cool-down, then the usual body order.
+ * Stable: on ties the planned order (pinned, most overdue) is kept.
  */
 export function sortForFlow(exercices: Exercice[]): Exercice[] {
-  const key = (exercice: Exercice) => [
-    exercice.category === 'STRETCHING' ? 1 : 0,
-    POSITION_ORDER.indexOf(getBodyPosition(exercice)),
+  // An exercise with several equipments joins the one most used in the session.
+  const uses = new Map<string, number>();
+  for (const exercice of exercices) {
+    for (const equipment of exercice.equipments) uses.set(equipment, (uses.get(equipment) ?? 0) + 1);
+  }
+  const equipmentOf = (exercice: Exercice) =>
+    [...exercice.equipments].sort((a, b) => (uses.get(b) ?? 0) - (uses.get(a) ?? 0) || a.localeCompare(b))[0] ?? '';
+  const positionOf = (exercice: Exercice) => POSITION_ORDER.indexOf(getBodyPosition(exercice));
+  const isStretch = (exercice: Exercice) => (exercice.category === 'STRETCHING' ? 1 : 0);
+
+  const groups = new Map<string, Exercice[]>();
+  for (const exercice of exercices) {
+    const key = equipmentOf(exercice);
+    groups.set(key, [...(groups.get(key) ?? []), exercice]);
+  }
+  // Rank of a group: stretch-only groups last, then its lowest position.
+  const rank = (members: Exercice[]) => [
+    Math.min(...members.map(isStretch)),
+    Math.min(...members.map(positionOf)),
   ];
-  const equipmentOf = (exercice: Exercice) => [...exercice.equipments].sort()[0] ?? '';
-  return [...exercices].sort((a, b) => {
-    const [sa, pa] = key(a);
-    const [sb, pb] = key(b);
-    return sa - sb || pa - pb || equipmentOf(a).localeCompare(equipmentOf(b)) || byBodyOrder(a, b);
-  });
+
+  return [...groups.entries()]
+    .sort(([keyA, a], [keyB, b]) => {
+      const [sa, pa] = rank(a);
+      const [sb, pb] = rank(b);
+      return sa - sb || pa - pb || keyA.localeCompare(keyB);
+    })
+    .flatMap(([, members]) =>
+      [...members].sort((a, b) => isStretch(a) - isStretch(b) || positionOf(a) - positionOf(b) || byBodyOrder(a, b))
+    );
 }
 
 const lastDoneTime = (exercice: Exercice) =>
