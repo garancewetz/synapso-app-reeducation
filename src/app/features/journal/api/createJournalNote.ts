@@ -1,5 +1,6 @@
 import { prisma } from '@/app/lib/prisma';
 import type { MediaItem } from '@/app/types/exercice';
+import { getOwnedExerciceIds } from './getOwnedExerciceIds';
 
 type CreateJournalNoteData = {
   title: string;
@@ -10,15 +11,17 @@ type CreateJournalNoteData = {
 };
 
 export async function createJournalNote(data: CreateJournalNoteData) {
+  const exerciceIds = await getOwnedExerciceIds(data.userId, data.exerciceIds ?? []);
+
   const note = await prisma.journalNote.create({
     data: {
       title: data.title.trim(),
       description: data.description ? data.description.trim() : '',
       media: data.media && data.media.length > 0 ? data.media : undefined,
       userId: data.userId,
-      exercices: data.exerciceIds && data.exerciceIds.length > 0
+      exercices: exerciceIds.length > 0
         ? {
-            create: data.exerciceIds.map((exerciceId) => ({
+            create: exerciceIds.map((exerciceId) => ({
               exerciceId,
             })),
           }

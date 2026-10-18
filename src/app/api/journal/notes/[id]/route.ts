@@ -110,7 +110,7 @@ export async function DELETE(
 
     // Supprimer les images de Cloudinary après la suppression en BDD
     await Promise.all(
-      media.map((m) => deleteCloudinaryMedia(m.publicId, 'image'))
+      media.map((m) => deleteCloudinaryMedia(m.publicId, userId, 'image'))
     );
 
     return NextResponse.json({ success: true });

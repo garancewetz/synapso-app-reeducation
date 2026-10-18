@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
-import { prisma } from './prisma';
 import {
   AUTH_COOKIE_NAME,
   IMPERSONATE_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
   signValue,
   readUserIdFromCookieValue,
 } from './auth-shared';
+import { findSessionUser, type SessionUser } from './session';
 
 // Configuration des cookies
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
-  maxAge: 60 * 60 * 24 * 30, // 30 jours
+  maxAge: SESSION_MAX_AGE_SECONDS,
   path: '/',
 };
 
@@ -31,11 +32,28 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
+// Une route appelle souvent requireAuth + getEffectiveUserId + isAdmin :
+// on ne résout la session qu'une fois par requête.
+const sessionCache = new WeakMap<NextRequest, Promise<SessionUser | null>>();
+
 /**
- * Récupère l'ID de l'utilisateur connecté depuis le cookie
+ * Récupère l'utilisateur connecté (session vérifiée en base)
  */
-export function getCurrentUserId(request: NextRequest): number | null {
-  return readUserIdFromCookieValue(request.cookies.get(AUTH_COOKIE_NAME)?.value);
+export function getSessionUser(request: NextRequest): Promise<SessionUser | null> {
+  let session = sessionCache.get(request);
+  if (!session) {
+    session = findSessionUser(request.cookies.get(AUTH_COOKIE_NAME)?.value);
+    sessionCache.set(request, session);
+  }
+  return session;
+}
+
+/**
+ * Récupère l'ID de l'utilisateur connecté
+ */
+export async function getCurrentUserId(request: NextRequest): Promise<number | null> {
+  const user = await getSessionUser(request);
+  return user?.id ?? null;
 }
 
 /**
@@ -47,29 +65,15 @@ export function getImpersonatedUserId(request: NextRequest): number | null {
 
 /**
  * Récupère l'ID de l'utilisateur effectif (impersonné si admin, sinon connecté)
- * Cette fonction vérifie aussi que l'utilisateur connecté est bien admin s'il y a impersonation
+ * L'impersonation est ignorée si l'utilisateur connecté n'est pas admin
  */
 export async function getEffectiveUserId(request: NextRequest): Promise<number | null> {
-  const currentUserId = getCurrentUserId(request);
-  if (!currentUserId) return null;
-  
+  const user = await getSessionUser(request);
+  if (!user) return null;
+
   const impersonatedUserId = getImpersonatedUserId(request);
-  
-  // Si pas d'impersonation, retourner l'utilisateur connecté
-  if (!impersonatedUserId) return currentUserId;
-  
-  // Vérifier que l'utilisateur connecté est admin
-  const currentUser = await prisma.user.findUnique({
-    where: { id: currentUserId },
-    select: { role: true },
-  });
-  
-  if (currentUser?.role !== 'ADMIN') {
-    // L'utilisateur n'est pas admin, ignorer l'impersonation
-    return currentUserId;
-  }
-  
-  // L'admin peut impersonner
+  if (!impersonatedUserId || user.role !== 'ADMIN') return user.id;
+
   return impersonatedUserId;
 }
 
@@ -77,31 +81,15 @@ export async function getEffectiveUserId(request: NextRequest): Promise<number |
  * Vérifie si l'utilisateur connecté est admin
  */
 export async function isAdmin(request: NextRequest): Promise<boolean> {
-  const userId = getCurrentUserId(request);
-  if (!userId) return false;
-  
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
-  
+  const user = await getSessionUser(request);
   return user?.role === 'ADMIN';
 }
 
 /**
- * Vérifie si l'utilisateur est authentifié
+ * Pose le cookie d'authentification (jeton créé par createSessionToken)
  */
-export async function checkAuth(request: NextRequest): Promise<boolean> {
-  const userId = getCurrentUserId(request);
-  return userId !== null;
-}
-
-/**
- * Crée le cookie d'authentification avec l'userId signé
- */
-export function setAuthCookie(response: NextResponse, userId: number): NextResponse {
-  const signedValue = signValue(userId.toString());
-  response.cookies.set(AUTH_COOKIE_NAME, signedValue, COOKIE_OPTIONS);
+export function setAuthCookie(response: NextResponse, sessionToken: string): NextResponse {
+  response.cookies.set(AUTH_COOKIE_NAME, sessionToken, COOKIE_OPTIONS);
   return response;
 }
 
@@ -136,9 +124,9 @@ export function clearImpersonateCookie(response: NextResponse): NextResponse {
  * Retourne null si l'utilisateur est authentifié, sinon retourne une réponse d'erreur
  */
 export async function requireAuth(request: NextRequest): Promise<NextResponse | null> {
-  const isAuthenticated = await checkAuth(request);
-  
-  if (!isAuthenticated) {
+  const user = await getSessionUser(request);
+
+  if (!user) {
     return NextResponse.json(
       { error: 'Non autorisé. Authentification requise.' },
       { status: 401 }

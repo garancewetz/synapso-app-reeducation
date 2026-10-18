@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/app/lib/auth';
+import { getAuthContext } from '@/app/lib/auth';
 import { logError } from '@/app/lib/logger';
 import { uploadMedia } from '@/app/features/exercices/api';
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAuth(request);
-  if (authError) return authError;
+  const auth = await getAuthContext(request);
+  if (auth instanceof NextResponse) return auth;
+  const { userId } = auth;
 
   try {
     const formData = await request.formData();
@@ -18,17 +19,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await uploadMedia({ file });
+    const result = await uploadMedia({ file, userId });
 
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof Error) {
-      if (error.message.includes('Configuration Cloudinary')) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 500 }
-        );
-      }
       if (error.message.includes('Type de fichier') || error.message.includes('trop volumineux') || error.message.includes('image valide')) {
         return NextResponse.json(
           { error: error.message },

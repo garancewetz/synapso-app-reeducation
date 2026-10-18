@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/app/lib/prisma';
 import type { MediaItem } from '@/app/types/exercice';
 import { deleteCloudinaryMedia } from '@/app/utils/cloudinary.utils';
+import { getOwnedExerciceIds } from './getOwnedExerciceIds';
 
 type UpdateJournalNoteData = {
   title?: string;
@@ -37,19 +38,21 @@ export async function updateJournalNote(params: UpdateJournalNoteParams) {
     const removedMedia = oldMedia.filter((m) => !newPublicIds.has(m.publicId));
 
     await Promise.all(
-      removedMedia.map((m) => deleteCloudinaryMedia(m.publicId, 'image'))
+      removedMedia.map((m) => deleteCloudinaryMedia(m.publicId, userId, 'image'))
     );
   }
 
   // Mettre à jour les liens exercices : supprimer les anciens + recréer
   if (data.exerciceIds !== undefined) {
+    const exerciceIds = await getOwnedExerciceIds(userId, data.exerciceIds);
+
     await prisma.journalNoteExercice.deleteMany({
       where: { journalNoteId: noteId },
     });
 
-    if (data.exerciceIds.length > 0) {
+    if (exerciceIds.length > 0) {
       await prisma.journalNoteExercice.createMany({
-        data: data.exerciceIds.map((exerciceId) => ({
+        data: exerciceIds.map((exerciceId) => ({
           journalNoteId: noteId,
           exerciceId,
         })),

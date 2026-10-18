@@ -24,7 +24,7 @@ Objectif : rendre l'app utilisable sans connexion — lecture des données réce
 - `/api/journal/notes` — notes du journal
 - `/api/progress` — victoires
 - `/api/stats/category` — stats par catégorie
-- `/api/bodyparts`, `/api/equipments` — métadonnées (peu changeantes)
+- `/api/equipments` — métadonnées (peu changeantes)
 
 **Écritures critiques (POST/PATCH/DELETE)** :
 - `/api/exercices/[id]/complete` — complétion (mutation quotidienne principale)
@@ -66,7 +66,7 @@ Changer la stratégie des `/api/*` :
 - Si échec ET `method === 'GET'` ET route dans la whitelist → retourner la dernière réponse cachée depuis Cache Storage
 - Sinon → 503 actuel (pour les mutations, voir 1.3)
 
-**Whitelist** : `/api/exercices`, `/api/history`, `/api/journal/notes`, `/api/progress`, `/api/bodyparts`, `/api/equipments`, `/api/stats/category`.
+**Whitelist** : `/api/exercices`, `/api/history`, `/api/journal/notes`, `/api/progress`, `/api/equipments`, `/api/stats/category`.
 
 ### 1.3 File de mutations offline
 
@@ -127,7 +127,7 @@ Politique par entité :
 
 ### 2.2 Edge cache pour les métadonnées quasi-statiques
 
-`/api/bodyparts` et `/api/equipments` changent très rarement. Les passer via Netlify Edge avec `Cache-Control: max-age=86400`.
+`/api/equipments` change très rarement. Le passer via Netlify Edge avec `Cache-Control: max-age=86400`.
 
 **Fichiers** : routes concernées + `netlify.toml` si besoin d'override.
 

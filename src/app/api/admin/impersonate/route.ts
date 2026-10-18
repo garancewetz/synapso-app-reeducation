@@ -69,7 +69,7 @@ export async function DELETE(request: NextRequest) {
   if (authError) return authError;
 
   try {
-    const currentUserId = getCurrentUserId(request);
+    const currentUserId = await getCurrentUserId(request);
     
     // Récupérer les infos de l'utilisateur admin
     const adminUser = await prisma.user.findUnique({

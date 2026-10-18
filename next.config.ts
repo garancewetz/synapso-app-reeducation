@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV === 'development';
+
 const securityHeaders = [
   {
     key: 'X-DNS-Prefetch-Control',
@@ -28,12 +30,12 @@ const securityHeaders = [
   },
   {
     // 🔒 SÉCURITÉ: Content Security Policy pour prévenir les attaques XSS
-    // Note: 'unsafe-inline' et 'unsafe-eval' sont nécessaires pour Next.js (hot reload, _next/static)
-    // En production avec Next.js, ces directives sont nécessaires pour le fonctionnement normal
+    // Note: 'unsafe-inline' reste nécessaire pour les scripts inline injectés par Next.js
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js nécessite unsafe-eval pour le développement et certaines optimisations
+      // unsafe-eval uniquement en dev (React Refresh / HMR) : le build de prod n'en a pas besoin
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
       "style-src 'self' 'unsafe-inline'", // Tailwind CSS et Next.js nécessitent unsafe-inline pour les styles
       "img-src 'self' data: blob: https://res.cloudinary.com", // data: pour les images inline, blob: pour les images générées, Cloudinary pour les médias
       "font-src 'self'", // Fonts locales uniquement (next/font)

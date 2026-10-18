@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     if (result instanceof NextResponse) return result;
     const { data } = result;
 
-    const user = await register({
+    const { user, sessionToken } = await register({
       name: data.name,
       password: data.password,
       invitationCode: data.invitationCode,
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       user,
     }, { status: 201 });
 
-    return setAuthCookie(response, user.id);
+    return setAuthCookie(response, sessionToken);
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === 'Code d\'invitation invalide') {

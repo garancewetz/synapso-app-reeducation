@@ -1,8 +1,7 @@
 import { timingSafeEqual } from 'crypto';
 import { prisma } from '@/app/lib/prisma';
 import { hashPassword } from '@/app/lib/auth';
-
-const ADMIN_NAME = process.env.ADMIN_NAME;
+import { createSessionToken } from '@/app/lib/auth-shared';
 
 function getValidInvitationCodes(): string[] {
   const INVITATION_CODE = process.env.INVITATION_CODE;
@@ -76,13 +75,11 @@ export async function register(params: RegisterParams) {
   }
 
   const passwordHash = await hashPassword(password);
-  const role = (ADMIN_NAME && trimmedName === ADMIN_NAME) ? 'ADMIN' : 'USER';
 
   const user = await prisma.user.create({
     data: {
       name: trimmedName,
       passwordHash,
-      role,
       ...(resetFrequency && { resetFrequency }),
       ...(dominantHand && { dominantHand }),
       ...(hasJournal !== undefined && { hasJournal }),
@@ -98,5 +95,8 @@ export async function register(params: RegisterParams) {
     },
   });
 
-  return user;
+  return {
+    user,
+    sessionToken: createSessionToken(user.id, passwordHash),
+  };
 }

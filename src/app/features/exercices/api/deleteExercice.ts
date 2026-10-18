@@ -22,7 +22,7 @@ export async function deleteExercice(params: DeleteExerciceParams) {
 
   if (existingExercice.media) {
     try {
-      await deleteExerciceMedia(existingExercice.media as { photos?: Array<{ url: string; publicId: string }>; video?: { url: string; publicId: string } | null });
+      await deleteExerciceMedia(existingExercice.media as { photos?: Array<{ url: string; publicId: string }>; video?: { url: string; publicId: string } | null }, userId);
     } catch (error) {
       console.error('Error deleting exercice media from Cloudinary', error);
     }
