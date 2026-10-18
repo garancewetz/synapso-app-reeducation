@@ -1,8 +1,10 @@
+import { randomUUID } from 'crypto';
 import { v2 as cloudinary } from 'cloudinary';
+import { getUserMediaPrefix } from '@/app/utils/cloudinary.utils';
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 
-function uploadToCloudinary(buffer: Buffer): Promise<{ secure_url: string; public_id: string }> {
+function uploadToCloudinary(buffer: Buffer, publicId: string): Promise<{ secure_url: string; public_id: string }> {
   return new Promise((resolve, reject) => {
     cloudinary.config({
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -12,7 +14,7 @@ function uploadToCloudinary(buffer: Buffer): Promise<{ secure_url: string; publi
 
     const uploadOptions = {
       resource_type: 'image' as const,
-      folder: 'exercices',
+      public_id: publicId,
       quality: 'auto' as const,
       fetch_format: 'auto' as const,
     };
@@ -38,10 +40,11 @@ function uploadToCloudinary(buffer: Buffer): Promise<{ secure_url: string; publi
 
 type UploadMediaParams = {
   file: File;
+  userId: number;
 };
 
 export async function uploadMedia(params: UploadMediaParams) {
-  const { file } = params;
+  const { file, userId } = params;
 
   if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
     throw new Error('Configuration Cloudinary manquante');
@@ -71,7 +74,9 @@ export async function uploadMedia(params: UploadMediaParams) {
     throw new Error('Le fichier n\'est pas une image valide');
   }
 
-  const result = await uploadToCloudinary(buffer);
+  // publicId explicite (et non `folder`) : le préfixe reste le même quel que
+  // soit le mode de dossiers du compte Cloudinary
+  const result = await uploadToCloudinary(buffer, `${getUserMediaPrefix(userId)}${randomUUID()}`);
 
   return {
     url: result.secure_url,

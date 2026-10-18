@@ -99,7 +99,7 @@ export async function updateExercice(params: UpdateExerciceParams) {
         const photosToDelete = oldMedia.photos.filter(photo => !newPhotoPublicIds.includes(photo.publicId));
         
         for (const photo of photosToDelete) {
-          await deletePhoto(photo);
+          await deletePhoto(photo, userId);
         }
       }
     } catch (error) {

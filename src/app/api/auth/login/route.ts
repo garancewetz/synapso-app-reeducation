@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { setAuthCookie } from '@/app/lib/auth';
 import { logError } from '@/app/lib/logger';
 import { login } from '@/app/features/auth/api';
+import { rateLimit, rateLimitResponse } from '@/app/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +22,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = await login({
+    // Le middleware limite par IP ; ici on limite aussi par compte visé
+    if (process.env.NODE_ENV !== 'development') {
+      const nameLimit = await rateLimit('loginName', name.trim().toLowerCase());
+      if (!nameLimit.allowed) {
+        return rateLimitResponse('loginName', nameLimit, 'Trop de tentatives. Veuillez réessayer dans quelques minutes.');
+      }
+    }
+
+    const { user, sessionToken } = await login({
       name,
       password,
     });
@@ -31,7 +40,7 @@ export async function POST(request: NextRequest) {
       user,
     });
 
-    return setAuthCookie(response, user.id);
+    return setAuthCookie(response, sessionToken);
   } catch (error) {
     if (error instanceof Error && error.message === 'Identifiants incorrects') {
       return NextResponse.json(

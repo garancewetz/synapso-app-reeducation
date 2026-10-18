@@ -13,9 +13,31 @@ type MediaData = {
 };
 
 /**
- * Supprime un média de Cloudinary
+ * Préfixe des publicId uploadés par un utilisateur.
+ * 🔒 Les publicId stockés en base viennent du client (et un partage d'exercice
+ * copie ceux de l'expéditeur) : on ne supprime chez Cloudinary que les médias
+ * rangés sous le préfixe de l'utilisateur, sinon n'importe qui pourrait faire
+ * supprimer l'image d'un autre compte. Les anciens médias (dossier `exercices/`,
+ * sans propriétaire connu) ne sont plus supprimés automatiquement.
  */
-export async function deleteCloudinaryMedia(publicId: string, resourceType: 'image' | 'video' = 'image'): Promise<void> {
+export function getUserMediaPrefix(userId: number): string {
+  return `users/${userId}/`;
+}
+
+export function isOwnedMedia(publicId: string, userId: number): boolean {
+  return publicId.startsWith(getUserMediaPrefix(userId)) && !publicId.includes('..');
+}
+
+/**
+ * Supprime un média de Cloudinary s'il appartient à l'utilisateur
+ */
+export async function deleteCloudinaryMedia(
+  publicId: string,
+  userId: number,
+  resourceType: 'image' | 'video' = 'image'
+): Promise<void> {
+  if (!isOwnedMedia(publicId, userId)) return;
+
   try {
     await cloudinary.uploader.destroy(publicId, {
       resource_type: resourceType,
@@ -30,7 +52,7 @@ export async function deleteCloudinaryMedia(publicId: string, resourceType: 'ima
 /**
  * Supprime tous les médias associés à un exercice
  */
-export async function deleteExerciceMedia(media: MediaData | null | undefined): Promise<void> {
+export async function deleteExerciceMedia(media: MediaData | null | undefined, userId: number): Promise<void> {
   if (!media) return;
 
   const deletePromises: Promise<void>[] = [];
@@ -39,7 +61,7 @@ export async function deleteExerciceMedia(media: MediaData | null | undefined): 
   if (media.photos && Array.isArray(media.photos)) {
     media.photos.forEach((photo) => {
       if (photo.publicId) {
-        deletePromises.push(deleteCloudinaryMedia(photo.publicId, 'image'));
+        deletePromises.push(deleteCloudinaryMedia(photo.publicId, userId, 'image'));
       }
     });
   }
@@ -51,9 +73,9 @@ export async function deleteExerciceMedia(media: MediaData | null | undefined): 
 /**
  * Supprime une seule photo de Cloudinary
  */
-export async function deletePhoto(photo: { url: string; publicId: string }): Promise<void> {
+export async function deletePhoto(photo: { url: string; publicId: string }, userId: number): Promise<void> {
   if (photo.publicId) {
-    await deleteCloudinaryMedia(photo.publicId, 'image');
+    await deleteCloudinaryMedia(photo.publicId, userId, 'image');
   }
 }
 

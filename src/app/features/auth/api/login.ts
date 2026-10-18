@@ -1,5 +1,10 @@
 import { prisma } from '@/app/lib/prisma';
 import { verifyPassword } from '@/app/lib/auth';
+import { createSessionToken } from '@/app/lib/auth-shared';
+
+// Hash bcrypt valide (coût 10) : comparer contre lui prend le même temps qu'un
+// vrai compte, ce qui évite de deviner les noms existants au temps de réponse.
+const DUMMY_PASSWORD_HASH = '$2b$10$C4Zt4rAa6PpXHuxclT6wyucQYBtDIX2DVAKUWxCdzrAcyR6WF9ysG';
 
 type LoginParams = {
   name: string;
@@ -28,8 +33,7 @@ export async function login(params: LoginParams) {
   if (user) {
     isValidPassword = await verifyPassword(password, user.passwordHash);
   } else {
-    const dummyHash = '$2b$10$dummy.hash.that.takes.same.time.as.real.hash';
-    await verifyPassword(password, dummyHash);
+    await verifyPassword(password, DUMMY_PASSWORD_HASH);
   }
 
   if (!user || !isValidPassword) {
@@ -37,7 +41,9 @@ export async function login(params: LoginParams) {
   }
 
   const { passwordHash, ...userWithoutPassword } = user;
-  void passwordHash;
 
-  return userWithoutPassword;
+  return {
+    user: userWithoutPassword,
+    sessionToken: createSessionToken(user.id, passwordHash),
+  };
 }
