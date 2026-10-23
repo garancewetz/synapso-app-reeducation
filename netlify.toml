@@ -14,3 +14,10 @@
 # DATABASE_URL - Connection string PostgreSQL
 # SITE_PASSWORD - Mot de passe pour accéder au site
 
+
+# L'ancienne adresse Netlify renvoie vers le domaine (redirection permanente, le chemin est gardé)
+[[redirects]]
+  from = "https://synapso.netlify.app/*"
+  to = "https://synapso.garancewetz.dev/:splat"
+  status = 301
+  force = true
